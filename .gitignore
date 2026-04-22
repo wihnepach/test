@@ -1,0 +1,10 @@
+# Node.js зависимости
+node_modules/
+
+# Локальная база данных SQLite
+todo.db
+todo.db-shm
+todo.db-wal
+
+# Локальные переменные окружения
+.env
