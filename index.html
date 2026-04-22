@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Список задач</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div class="hero__content">
+        <p class="eyebrow">To-Do List на JavaScript</p>
+        <h1>Управляй задачами без хаоса</h1>
+        <p class="hero__text">
+          Добавляй задачи, ставь приоритеты, назначай дедлайны и храни все данные в
+          сервере Node.js и в базе SQLite, чтобы они не терялись после перезагрузки.
+        </p>
+      </div>
+
+      <div class="stats" aria-label="Статистика задач">
+        <article class="stat-card">
+          <span class="stat-card__label">Всего</span>
+          <strong class="stat-card__value" id="totalCount">0</strong>
+        </article>
+        <article class="stat-card">
+          <span class="stat-card__label">Выполнено</span>
+          <strong class="stat-card__value" id="completedCount">0</strong>
+        </article>
+        <article class="stat-card">
+          <span class="stat-card__label">Активно</span>
+          <strong class="stat-card__value" id="activeCount">0</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <form class="task-form" id="taskForm">
+        <div class="field field--wide">
+          <label for="taskInput">Новая задача</label>
+          <input id="taskInput" name="taskInput" type="text" maxlength="120" placeholder="Например: Подготовить презентацию" required>
+        </div>
+
+        <div class="field">
+          <label for="categoryInput">Категория</label>
+          <input id="categoryInput" name="categoryInput" type="text" maxlength="40" placeholder="Учёба / Работа / Дом">
+        </div>
+
+        <div class="field">
+          <label for="priorityInput">Приоритет</label>
+          <select id="priorityInput" name="priorityInput">
+            <option value="low">Низкий</option>
+            <option value="medium" selected>Средний</option>
+            <option value="high">Высокий</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="deadlineInput">Дедлайн</label>
+          <input id="deadlineInput" name="deadlineInput" type="datetime-local">
+        </div>
+
+        <button class="primary-button" type="submit">Добавить задачу</button>
+      </form>
+
+      <div class="toolbar">
+        <div class="toolbar__group">
+          <label class="sr-only" for="searchInput">Поиск задач</label>
+          <input id="searchInput" type="search" placeholder="Поиск по задачам">
+        </div>
+
+        <div class="toolbar__group">
+          <label class="sr-only" for="statusFilter">Фильтр по статусу</label>
+          <select id="statusFilter">
+            <option value="all">Все</option>
+            <option value="active">Невыполненные</option>
+            <option value="completed">Выполненные</option>
+          </select>
+        </div>
+
+        <div class="toolbar__group">
+          <label class="sr-only" for="sortSelect">Сортировка</label>
+          <select id="sortSelect">
+            <option value="newest">Сначала новые</option>
+            <option value="oldest">Сначала старые</option>
+            <option value="deadline">По дедлайну</option>
+            <option value="priority">По приоритету</option>
+          </select>
+        </div>
+
+        <button class="secondary-button" id="clearCompletedBtn" type="button">
+          Очистить выполненные
+        </button>
+      </div>
+
+      <section class="task-section" aria-live="polite">
+        <div class="task-section__header">
+          <h2>Список задач</h2>
+          <p id="taskSummary">Нет задач</p>
+        </div>
+
+        <div class="status-banner" id="statusBanner" hidden></div>
+
+        <ul class="task-list" id="taskList"></ul>
+
+        <div class="empty-state" id="emptyState">
+          <h3>Список пока пуст</h3>
+          <p>Добавь первую задачу и начни управлять делами в одном месте.</p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <template id="taskTemplate">
+    <li class="task-item">
+      <div class="task-item__main">
+        <label class="checkbox">
+          <input class="task-toggle" type="checkbox">
+          <span></span>
+        </label>
+
+        <div class="task-item__content">
+          <div class="task-item__top">
+            <h3 class="task-title"></h3>
+            <span class="priority-badge"></span>
+          </div>
+
+          <div class="task-meta">
+            <span class="task-category"></span>
+            <span class="task-created"></span>
+            <span class="task-deadline"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-item__actions">
+        <button class="icon-button edit-button" type="button">Редактировать</button>
+        <button class="icon-button delete-button" type="button">Удалить</button>
+      </div>
+    </li>
+  </template>
+
+  <script src="test1.js"></script>
+</body>
+</html>
