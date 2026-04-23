@@ -12,6 +12,10 @@ const DATABASE_PATH = process.env.DATABASE_PATH || path.join(DATA_DIR, "todo.db"
 
 const ENCRYPTION_SECRET =
   process.env.AUTH_ENCRYPTION_KEY || "development-secret-change-me-before-production";
+const CORS_ALLOWED_ORIGINS = String(process.env.CORS_ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((item) => item.trim())
+  .filter(Boolean);
 
 module.exports = {
   HOST: process.env.HOST || "127.0.0.1",
@@ -20,6 +24,13 @@ module.exports = {
   COOKIE_NAME: process.env.SESSION_COOKIE_NAME || "todo_session",
   SESSION_TTL_HOURS: Number(process.env.SESSION_TTL_HOURS) || 24,
   VERIFICATION_CODE_TTL_MINUTES: Number(process.env.VERIFICATION_CODE_TTL_MINUTES) || 10,
+  AUTH_RATE_LIMIT_WINDOW_MS: Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS) || 60 * 1000,
+  AUTH_RATE_LIMIT_MAX: Number(process.env.AUTH_RATE_LIMIT_MAX) || 20,
+  LOGIN_ATTEMPT_WINDOW_MS: Number(process.env.LOGIN_ATTEMPT_WINDOW_MS) || 15 * 60 * 1000,
+  LOGIN_MAX_ATTEMPTS: Number(process.env.LOGIN_MAX_ATTEMPTS) || 5,
+  LOGIN_BLOCK_MS: Number(process.env.LOGIN_BLOCK_MS) || 15 * 60 * 1000,
+  LOGIN_FAILURE_DELAY_MS: Number(process.env.LOGIN_FAILURE_DELAY_MS) || 300,
+  CORS_ALLOWED_ORIGINS,
   ENCRYPTION_KEY: crypto.createHash("sha256").update(ENCRYPTION_SECRET).digest(),
   ROOT_DIR,
   PUBLIC_DIR,

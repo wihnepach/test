@@ -159,3 +159,37 @@ test("unknown route returns standardized not-found error", async () => {
   assert.equal(data.code, "NOT_FOUND");
   assert.equal(typeof data.message, "string");
 });
+
+test("cors middleware sets headers for allowed origin in development", async () => {
+  const response = await request("/api/auth/session", {
+    headers: {
+      origin: "http://localhost:5173"
+    }
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("access-control-allow-origin"), "http://localhost:5173");
+  assert.equal(response.headers.get("access-control-allow-credentials"), "true");
+});
+
+test("auth endpoints are protected by rate limiter", async () => {
+  let lastStatus = 0;
+  let lastPayload = null;
+
+  for (let index = 0; index < 21; index += 1) {
+    const response = await request("/api/auth/register", {
+      method: "POST",
+      body: {
+        name: "",
+        contactType: "email",
+        contact: "invalid",
+        password: "short"
+      }
+    });
+    lastStatus = response.status;
+    lastPayload = await response.json();
+  }
+
+  assert.equal(lastStatus, 429);
+  assert.equal(lastPayload.code, "RATE_LIMITED");
+});

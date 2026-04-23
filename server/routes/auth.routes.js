@@ -1,12 +1,21 @@
 const express = require("express");
 
+const env = require("../../config/env");
 const authService = require("../services/auth.service");
 const { asyncHandler } = require("../utils/async-handler");
+const { createRateLimiter } = require("../middleware/rate-limit.middleware");
 
 const router = express.Router();
+const authRateLimiter = createRateLimiter({
+  windowMs: env.AUTH_RATE_LIMIT_WINDOW_MS,
+  max: env.AUTH_RATE_LIMIT_MAX,
+  keyPrefix: "auth",
+  message: "Too many auth requests. Please try again later."
+});
 
 router.post(
   "/register",
+  authRateLimiter,
   asyncHandler(async (request, response) => {
     const result = await authService.registerUser(request.body);
     response.status(result.status).json(result.body);
@@ -15,6 +24,7 @@ router.post(
 
 router.post(
   "/verify",
+  authRateLimiter,
   asyncHandler(async (request, response) => {
     const result = authService.verifyUser(request.body);
 
@@ -28,6 +38,7 @@ router.post(
 
 router.post(
   "/resend-verification",
+  authRateLimiter,
   asyncHandler(async (request, response) => {
     const result = authService.resendVerificationCode(request.body);
     response.status(result.status).json(result.body);
@@ -36,6 +47,7 @@ router.post(
 
 router.post(
   "/login",
+  authRateLimiter,
   asyncHandler(async (request, response) => {
     const result = await authService.loginUser(request.body);
 

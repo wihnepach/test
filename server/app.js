@@ -10,15 +10,17 @@ require("./db/database");
 const authRoutes = require("./routes/auth.routes");
 const tasksRoutes = require("./routes/tasks.routes");
 const { notFoundHandler, errorHandler } = require("./middleware/error.middleware");
+const { corsMiddleware } = require("./middleware/cors.middleware");
 
 const app = express();
 
 app.use(
   helmet({
-    contentSecurityPolicy: false
+    contentSecurityPolicy: env.NODE_ENV === "production"
   })
 );
 app.use(morgan("dev"));
+app.use(corsMiddleware);
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(env.PUBLIC_DIR));

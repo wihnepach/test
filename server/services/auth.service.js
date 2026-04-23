@@ -22,6 +22,8 @@ const {
 } = require("../utils/validators");
 const { createErrorResult, createValidationError } = require("../utils/errors");
 
+const loginSecurityState = new Map();
+
 async function registerUser(payload) {
   const validationDetails = validateRegistrationPayload(payload);
 
@@ -195,13 +197,25 @@ async function loginUser(payload) {
   const contactHash = hashValue(
     buildContactKey(normalizedPayload.contactType, normalizedPayload.contact)
   );
+  const blockedState = getBlockedLoginState(contactHash);
+
+  if (blockedState) {
+    return createErrorResult(429, "LOGIN_BLOCKED", "Too many failed login attempts.", {
+      retryAfterSeconds: Math.max(1, Math.ceil((blockedState.blockedUntil - Date.now()) / 1000))
+    });
+  }
+
   const user = db.prepare("SELECT * FROM users WHERE contactHash = ?").get(contactHash);
 
   if (!user) {
+    markFailedLoginAttempt(contactHash);
+    await delayFailureResponse();
     return createErrorResult(401, "INVALID_CREDENTIALS", "Invalid login or password.");
   }
 
   if (!user.isVerified) {
+    markFailedLoginAttempt(contactHash);
+    await delayFailureResponse();
     return createErrorResult(
       403,
       "CONTACT_NOT_VERIFIED",
@@ -212,8 +226,12 @@ async function loginUser(payload) {
   const passwordMatches = await bcrypt.compare(normalizedPayload.password, user.passwordHash);
 
   if (!passwordMatches) {
+    markFailedLoginAttempt(contactHash);
+    await delayFailureResponse();
     return createErrorResult(401, "INVALID_CREDENTIALS", "Invalid login or password.");
   }
+
+  clearLoginAttemptState(contactHash);
 
   return {
     status: 200,
@@ -293,6 +311,60 @@ function serializeUser(user) {
   };
 }
 
+function getBlockedLoginState(contactHash) {
+  const now = Date.now();
+  const state = loginSecurityState.get(contactHash);
+
+  if (!state) {
+    return null;
+  }
+
+  if (state.blockedUntil && now < state.blockedUntil) {
+    return state;
+  }
+
+  if (now > state.firstFailedAt + env.LOGIN_ATTEMPT_WINDOW_MS) {
+    loginSecurityState.delete(contactHash);
+  }
+
+  return null;
+}
+
+function markFailedLoginAttempt(contactHash) {
+  const now = Date.now();
+  const state = loginSecurityState.get(contactHash);
+
+  if (!state || now > state.firstFailedAt + env.LOGIN_ATTEMPT_WINDOW_MS) {
+    loginSecurityState.set(contactHash, {
+      attempts: 1,
+      firstFailedAt: now,
+      blockedUntil: null
+    });
+    return;
+  }
+
+  state.attempts += 1;
+  if (state.attempts >= env.LOGIN_MAX_ATTEMPTS) {
+    state.blockedUntil = now + env.LOGIN_BLOCK_MS;
+    state.attempts = 0;
+    state.firstFailedAt = now;
+  }
+}
+
+function clearLoginAttemptState(contactHash) {
+  loginSecurityState.delete(contactHash);
+}
+
+function delayFailureResponse() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, env.LOGIN_FAILURE_DELAY_MS);
+  });
+}
+
+function __resetLoginSecurityStateForTests() {
+  loginSecurityState.clear();
+}
+
 module.exports = {
   registerUser,
   verifyUser,
@@ -301,5 +373,6 @@ module.exports = {
   getSessionUser,
   createSession,
   destroySession,
-  serializeUser
+  serializeUser,
+  __resetLoginSecurityStateForTests
 };

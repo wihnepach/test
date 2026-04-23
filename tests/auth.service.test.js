@@ -10,6 +10,7 @@ const authService = require("../server/services/auth.service");
 
 test.beforeEach(() => {
   resetDatabase(db);
+  authService.__resetLoginSecurityStateForTests();
 });
 
 test("registerUser rejects invalid contact", async () => {
@@ -77,6 +78,26 @@ test("registerUser rejects duplicate contact", async () => {
   });
   assert.equal(secondRegistration.status, 409);
   assert.equal(secondRegistration.body.code, "CONTACT_EXISTS");
+});
+
+test("loginUser temporarily blocks after repeated failed attempts", async () => {
+  const payload = {
+    contactType: "email",
+    contact: "nobody@example.com",
+    password: "password123"
+  };
+
+  const firstAttempt = await authService.loginUser(payload);
+  const secondAttempt = await authService.loginUser(payload);
+  const thirdAttempt = await authService.loginUser(payload);
+  const blockedAttempt = await authService.loginUser(payload);
+
+  assert.equal(firstAttempt.status, 401);
+  assert.equal(secondAttempt.status, 401);
+  assert.equal(thirdAttempt.status, 401);
+  assert.equal(blockedAttempt.status, 429);
+  assert.equal(blockedAttempt.body.code, "LOGIN_BLOCKED");
+  assert.ok(blockedAttempt.body.details.retryAfterSeconds >= 1);
 });
 
 test.after(() => {
