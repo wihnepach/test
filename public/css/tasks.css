@@ -17,7 +17,9 @@
 }
 
 .toolbar {
-  grid-template-columns: minmax(180px, 1.2fr) repeat(2, minmax(180px, 0.75fr)) minmax(220px, 1fr) auto;
+  grid-template-columns:
+    minmax(180px, 1.2fr) repeat(2, minmax(180px, 0.75fr)) minmax(220px, 1fr)
+    auto;
   margin: 28px 0 18px;
   padding: 16px;
   border: 1px solid rgba(73, 53, 34, 0.08);

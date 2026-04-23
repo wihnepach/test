@@ -56,14 +56,16 @@ function deleteExpiredSessions(currentTimestamp) {
 
 function findSessionUserByTokenHash(tokenHash, currentTimestamp) {
   return (
-    db.prepare(
-      `
+    db
+      .prepare(
+        `
       SELECT sessions.userId, users.*
       FROM sessions
       JOIN users ON users.id = sessions.userId
       WHERE sessions.tokenHash = ? AND sessions.expiresAt > ?
       `
-    ).get(tokenHash, currentTimestamp) || null
+      )
+      .get(tokenHash, currentTimestamp) || null
   );
 }
 

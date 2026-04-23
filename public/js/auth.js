@@ -240,8 +240,7 @@ async function initializeAuth() {
 
     if (isAuthenticated) {
       accountTitle.textContent = `Здравствуйте, ${window.appState.currentUser.name}`;
-      accountSubtitle.textContent =
-        `Контакт подтверждён: ${window.appState.currentUser.contactMasked}. Ваши задачи доступны только в вашем аккаунте.`;
+      accountSubtitle.textContent = `Контакт подтверждён: ${window.appState.currentUser.contactMasked}. Ваши задачи доступны только в вашем аккаунте.`;
       openAuthModalBtn.textContent = window.appState.currentUser.name;
       closeAuthModal();
     } else {
@@ -296,11 +295,15 @@ async function initializeAuth() {
 async function request(url, options = {}) {
   const response = await fetch(url, options);
   const contentType = response.headers.get("content-type") || "";
-  const data = contentType.includes("application/json") ? await response.json() : await response.text();
+  const data = contentType.includes("application/json")
+    ? await response.json()
+    : await response.text();
 
   if (!response.ok) {
     const message =
-      typeof data === "object" && data !== null && "message" in data ? data.message : "Ошибка запроса.";
+      typeof data === "object" && data !== null && "message" in data
+        ? data.message
+        : "Ошибка запроса.";
     throw new Error(message);
   }
 

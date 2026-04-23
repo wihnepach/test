@@ -17,7 +17,11 @@ function encryptValue(value) {
 
 function decryptValue(payload) {
   const [ivHex, authTagHex, encryptedHex] = String(payload).split(".");
-  const decipher = crypto.createDecipheriv("aes-256-gcm", env.ENCRYPTION_KEY, Buffer.from(ivHex, "hex"));
+  const decipher = crypto.createDecipheriv(
+    "aes-256-gcm",
+    env.ENCRYPTION_KEY,
+    Buffer.from(ivHex, "hex")
+  );
 
   decipher.setAuthTag(Buffer.from(authTagHex, "hex"));
 

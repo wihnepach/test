@@ -57,7 +57,10 @@ function setupDatabase() {
     CREATE INDEX IF NOT EXISTS idx_sessions_tokenHash ON sessions (tokenHash);
   `);
 
-  const columns = db.prepare("PRAGMA table_info(tasks)").all().map((column) => column.name);
+  const columns = db
+    .prepare("PRAGMA table_info(tasks)")
+    .all()
+    .map((column) => column.name);
 
   if (!columns.includes("userId")) {
     db.exec("ALTER TABLE tasks ADD COLUMN userId TEXT");

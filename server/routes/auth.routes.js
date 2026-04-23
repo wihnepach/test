@@ -13,17 +13,9 @@ const authRateLimiter = createRateLimiter({
   message: "Too many auth requests. Please try again later."
 });
 
-router.post(
-  "/register",
-  authRateLimiter,
-  asyncHandler(authController.register)
-);
+router.post("/register", authRateLimiter, asyncHandler(authController.register));
 
-router.post(
-  "/verify",
-  authRateLimiter,
-  asyncHandler(authController.verify)
-);
+router.post("/verify", authRateLimiter, asyncHandler(authController.verify));
 
 router.post(
   "/resend-verification",
@@ -31,20 +23,10 @@ router.post(
   asyncHandler(authController.resendVerification)
 );
 
-router.post(
-  "/login",
-  authRateLimiter,
-  asyncHandler(authController.login)
-);
+router.post("/login", authRateLimiter, asyncHandler(authController.login));
 
-router.get(
-  "/session",
-  asyncHandler(authController.session)
-);
+router.get("/session", asyncHandler(authController.session));
 
-router.post(
-  "/logout",
-  asyncHandler(authController.logout)
-);
+router.post("/logout", asyncHandler(authController.logout));
 
 module.exports = router;

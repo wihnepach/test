@@ -7,7 +7,7 @@ function notFoundHandler(request, response) {
   });
 }
 
-function errorHandler(error, request, response, next) {
+function errorHandler(error, request, response, _next) {
   const payload = toHttpErrorPayload(error);
   response.status(payload.status).json(payload.body);
 }

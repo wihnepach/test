@@ -63,7 +63,7 @@ function purgeModuleCache() {
 
     try {
       delete require.cache[require.resolve(absolutePath)];
-    } catch (error) {
+    } catch {
       // Ignore modules that are not loaded yet.
     }
   }

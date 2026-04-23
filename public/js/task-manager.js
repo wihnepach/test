@@ -1,4 +1,4 @@
-const taskManager = {
+﻿const taskManager = {
   async loadTasks() {},
   renderTasks() {}
 };
@@ -151,7 +151,9 @@ async function initializeTaskManager() {
       if (canDrag) {
         taskNode.addEventListener("dragstart", () => handleDragStart(task.id, taskNode));
         taskNode.addEventListener("dragover", (event) => handleDragOver(event, taskNode));
-        taskNode.addEventListener("dragleave", () => taskNode.classList.remove("task-item--drag-over"));
+        taskNode.addEventListener("dragleave", () =>
+          taskNode.classList.remove("task-item--drag-over")
+        );
         taskNode.addEventListener("drop", () => handleDrop(task.id));
         taskNode.addEventListener("dragend", () => {
           uiState.draggedTaskId = null;
@@ -171,7 +173,9 @@ async function initializeTaskManager() {
       priorityBadge.dataset.priority = task.priority;
       category.textContent = task.category ? `Category: ${task.category}` : "No category";
       created.textContent = `Created: ${formatDate(task.createdAt)}`;
-      deadline.textContent = task.deadline ? `Deadline: ${formatDate(task.deadline)}` : "No deadline";
+      deadline.textContent = task.deadline
+        ? `Deadline: ${formatDate(task.deadline)}`
+        : "No deadline";
 
       editButton.addEventListener("click", () => editTask(task.id));
       deleteButton.addEventListener("click", () => deleteTask(task.id));
@@ -205,8 +209,12 @@ async function initializeTaskManager() {
     if (elements.sortSelect.value === "manual") {
       const orderMap = new Map(uiState.manualOrderIds.map((id, index) => [id, index]));
       return filteredTasks.sort((firstTask, secondTask) => {
-        const firstIndex = orderMap.has(firstTask.id) ? orderMap.get(firstTask.id) : Number.MAX_SAFE_INTEGER;
-        const secondIndex = orderMap.has(secondTask.id) ? orderMap.get(secondTask.id) : Number.MAX_SAFE_INTEGER;
+        const firstIndex = orderMap.has(firstTask.id)
+          ? orderMap.get(firstTask.id)
+          : Number.MAX_SAFE_INTEGER;
+        const secondIndex = orderMap.has(secondTask.id)
+          ? orderMap.get(secondTask.id)
+          : Number.MAX_SAFE_INTEGER;
 
         if (firstIndex !== secondIndex) {
           return firstIndex - secondIndex;
@@ -381,7 +389,9 @@ async function initializeTaskManager() {
   }
 
   async function completeSelectedTasks() {
-    const selectedTasks = window.appState.tasks.filter((task) => uiState.selectedTaskIds.has(task.id));
+    const selectedTasks = window.appState.tasks.filter((task) =>
+      uiState.selectedTaskIds.has(task.id)
+    );
 
     if (selectedTasks.length === 0) {
       window.alert("Select at least one task.");
@@ -437,8 +447,12 @@ async function initializeTaskManager() {
     }
 
     try {
-      await Promise.all(selectedIds.map((taskId) => window.request(`/api/tasks/${taskId}`, { method: "DELETE" })));
-      window.appState.tasks = window.appState.tasks.filter((task) => !uiState.selectedTaskIds.has(task.id));
+      await Promise.all(
+        selectedIds.map((taskId) => window.request(`/api/tasks/${taskId}`, { method: "DELETE" }))
+      );
+      window.appState.tasks = window.appState.tasks.filter(
+        (task) => !uiState.selectedTaskIds.has(task.id)
+      );
       uiState.selectedTaskIds.clear();
       syncManualOrderWithTasks();
       window.hideBanner(elements.taskStatusBanner);
@@ -511,7 +525,9 @@ async function initializeTaskManager() {
     const allVisibleSelected =
       visibleTasks.length > 0 && visibleTasks.every((task) => uiState.selectedTaskIds.has(task.id));
 
-    elements.selectVisibleBtn.textContent = allVisibleSelected ? "Unselect visible" : "Select visible";
+    elements.selectVisibleBtn.textContent = allVisibleSelected
+      ? "Unselect visible"
+      : "Select visible";
     elements.markSelectedCompletedBtn.disabled = selectedCount === 0;
     elements.deleteSelectedBtn.disabled = selectedCount === 0;
   }
@@ -533,14 +549,16 @@ async function initializeTaskManager() {
 
   function updateSummary(visibleCount) {
     if (window.appState.tasks.length === 0) {
-      elements.taskSummary.textContent = window.appState.currentUser ? "No tasks yet" : "Sign in to manage tasks";
+      elements.taskSummary.textContent = window.appState.currentUser
+        ? "No tasks yet"
+        : "Sign in to manage tasks";
       return;
     }
 
     const selectedCount = uiState.selectedTaskIds.size;
     elements.taskSummary.textContent =
       `Visible: ${visibleCount} of ${window.appState.tasks.length}` +
-      (selectedCount > 0 ? ` � Selected: ${selectedCount}` : "");
+      (selectedCount > 0 ? ` • Selected: ${selectedCount}` : "");
   }
 
   function pruneSelectedIds() {
@@ -594,7 +612,7 @@ async function initializeTaskManager() {
     try {
       const value = localStorage.getItem(storageKey);
       uiState.manualOrderIds = value ? JSON.parse(value) : [];
-    } catch (error) {
+    } catch {
       uiState.manualOrderIds = [];
     }
   }

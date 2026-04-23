@@ -184,7 +184,10 @@ function validateTaskPayload(payload = {}, partial = false) {
     }
   }
 
-  if (Object.prototype.hasOwnProperty.call(payload, "completed") && payload.completed !== undefined) {
+  if (
+    Object.prototype.hasOwnProperty.call(payload, "completed") &&
+    payload.completed !== undefined
+  ) {
     if (typeof payload.completed !== "boolean") {
       details.push({ field: "completed", issue: "must be a boolean" });
     }

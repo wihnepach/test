@@ -1,6 +1,11 @@
 <div class="auth-modal" id="authModal" hidden>
   <div class="auth-modal__backdrop" id="authModalBackdrop"></div>
-  <section class="panel auth-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+  <section
+    class="panel auth-modal__dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="authModalTitle"
+  >
     <div class="auth-header">
       <div>
         <p class="eyebrow eyebrow--small">Быстрый вход</p>
@@ -8,11 +13,20 @@
       </div>
       <div class="auth-header__actions">
         <div class="auth-tabs" role="tablist" aria-label="Формы авторизации">
-          <button class="tab-button tab-button--active" type="button" data-tab="register">Регистрация</button>
+          <button class="tab-button tab-button--active" type="button" data-tab="register">
+            Регистрация
+          </button>
           <button class="tab-button" type="button" data-tab="login">Вход</button>
           <button class="tab-button" type="button" data-tab="verify">Код</button>
         </div>
-        <button class="modal-close-button" id="closeAuthModalBtn" type="button" aria-label="Закрыть окно">&times;</button>
+        <button
+          class="modal-close-button"
+          id="closeAuthModalBtn"
+          type="button"
+          aria-label="Закрыть окно"
+        >
+          &times;
+        </button>
       </div>
     </div>
 
@@ -21,7 +35,7 @@
     <form class="auth-form auth-form--active" id="registerForm" data-form="register">
       <div class="field">
         <label for="registerName">Имя</label>
-        <input id="registerName" type="text" maxlength="60" placeholder="Ваше имя" required>
+        <input id="registerName" type="text" maxlength="60" placeholder="Ваше имя" required />
       </div>
 
       <div class="field">
@@ -34,12 +48,23 @@
 
       <div class="field field--wide">
         <label for="registerContact">Email или номер телефона</label>
-        <input id="registerContact" type="text" placeholder="name@example.com или +79991234567" required>
+        <input
+          id="registerContact"
+          type="text"
+          placeholder="name@example.com или +79991234567"
+          required
+        />
       </div>
 
       <div class="field field--wide">
         <label for="registerPassword">Пароль</label>
-        <input id="registerPassword" type="password" minlength="8" placeholder="Минимум 8 символов" required>
+        <input
+          id="registerPassword"
+          type="password"
+          minlength="8"
+          placeholder="Минимум 8 символов"
+          required
+        />
       </div>
 
       <button class="primary-button" type="submit">Создать аккаунт</button>
@@ -56,12 +81,17 @@
 
       <div class="field field--wide">
         <label for="loginContact">Email или номер телефона</label>
-        <input id="loginContact" type="text" placeholder="name@example.com или +79991234567" required>
+        <input
+          id="loginContact"
+          type="text"
+          placeholder="name@example.com или +79991234567"
+          required
+        />
       </div>
 
       <div class="field field--wide">
         <label for="loginPassword">Пароль</label>
-        <input id="loginPassword" type="password" placeholder="Введите пароль" required>
+        <input id="loginPassword" type="password" placeholder="Введите пароль" required />
       </div>
 
       <button class="primary-button" type="submit">Войти</button>
@@ -78,17 +108,31 @@
 
       <div class="field field--wide">
         <label for="verifyContact">Email или номер телефона</label>
-        <input id="verifyContact" type="text" placeholder="name@example.com или +79991234567" required>
+        <input
+          id="verifyContact"
+          type="text"
+          placeholder="name@example.com или +79991234567"
+          required
+        />
       </div>
 
       <div class="field">
         <label for="verifyCode">Код подтверждения</label>
-        <input id="verifyCode" type="text" inputmode="numeric" maxlength="6" placeholder="6 цифр" required>
+        <input
+          id="verifyCode"
+          type="text"
+          inputmode="numeric"
+          maxlength="6"
+          placeholder="6 цифр"
+          required
+        />
       </div>
 
       <div class="auth-actions">
         <button class="primary-button" type="submit">Подтвердить</button>
-        <button class="secondary-button" id="resendVerificationBtn" type="button">Выслать код повторно</button>
+        <button class="secondary-button" id="resendVerificationBtn" type="button">
+          Выслать код повторно
+        </button>
       </div>
     </form>
   </section>
