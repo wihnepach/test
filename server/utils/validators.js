@@ -1,5 +1,10 @@
+const { AUTH_CONTACT_TYPE } = require("../constants/auth.constants");
+const { TASK_PRIORITY, TASK_PRIORITY_VALUES } = require("../constants/task.constants");
+
 function normalizeContactType(contactType) {
-  return contactType === "phone" ? "phone" : "email";
+  return contactType === AUTH_CONTACT_TYPE.PHONE
+    ? AUTH_CONTACT_TYPE.PHONE
+    : AUTH_CONTACT_TYPE.EMAIL;
 }
 
 function normalizeContact(contactType, contact) {
@@ -19,7 +24,7 @@ function normalizeContact(contactType, contact) {
 }
 
 function isValidContact(contactType, contact) {
-  if (contactType === "phone") {
+  if (contactType === AUTH_CONTACT_TYPE.PHONE) {
     return /^\+\d{10,15}$/.test(contact);
   }
 
@@ -28,11 +33,11 @@ function isValidContact(contactType, contact) {
 
 function normalizePriority(priority, partial = false) {
   if (typeof priority !== "string") {
-    return partial ? undefined : "medium";
+    return partial ? undefined : TASK_PRIORITY.MEDIUM;
   }
 
   const value = priority.trim().toLowerCase();
-  return ["low", "medium", "high"].includes(value) ? value : undefined;
+  return TASK_PRIORITY_VALUES.includes(value) ? value : undefined;
 }
 
 function normalizeRegistrationPayload(payload = {}) {
@@ -163,7 +168,7 @@ function validateTaskPayload(payload = {}, partial = false) {
   if (Object.prototype.hasOwnProperty.call(payload, "priority") && payload.priority !== undefined) {
     if (typeof payload.priority !== "string") {
       details.push({ field: "priority", issue: "must be a string" });
-    } else if (!["low", "medium", "high"].includes(payload.priority.trim().toLowerCase())) {
+    } else if (!TASK_PRIORITY_VALUES.includes(payload.priority.trim().toLowerCase())) {
       details.push({ field: "priority", issue: "must be one of: low, medium, high" });
     }
   }

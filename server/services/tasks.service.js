@@ -1,21 +1,14 @@
 const { v4: uuidv4 } = require("uuid");
 
-const db = require("../db/database");
+const tasksRepository = require("../repositories/tasks.repository");
+const { toTaskListDto } = require("../dto/task.dto");
 const { normalizeTaskPayload, validateTaskPayload } = require("../utils/validators");
 const { createErrorResult, createValidationError } = require("../utils/errors");
+const { TASK_PRIORITY } = require("../constants/task.constants");
 
 function listTasks(userId) {
-  return db
-    .prepare(
-      `
-      SELECT id, userId, title, category, priority, deadline, completed, createdAt
-      FROM tasks
-      WHERE userId = ?
-      ORDER BY createdAt DESC
-      `
-    )
-    .all(userId)
-    .map(mapTaskRow);
+  const tasks = tasksRepository.listTasksByUserId(userId);
+  return toTaskListDto(tasks);
 }
 
 function createTask(userId, payload) {
@@ -31,29 +24,19 @@ function createTask(userId, payload) {
     userId,
     title: normalizedPayload.title,
     category: normalizedPayload.category,
-    priority: normalizedPayload.priority || "medium",
+    priority: normalizedPayload.priority || TASK_PRIORITY.MEDIUM,
     deadline: normalizedPayload.deadline,
     completed: false,
     createdAt: Date.now()
   };
 
-  db.prepare(
-    `
-    INSERT INTO tasks (id, userId, title, category, priority, deadline, completed, createdAt)
-    VALUES (@id, @userId, @title, @category, @priority, @deadline, @completed, @createdAt)
-    `
-  ).run({
-    ...task,
-    completed: Number(task.completed)
-  });
+  tasksRepository.createTask(task);
 
   return { status: 201, body: task };
 }
 
 function updateTask(userId, taskId, payload) {
-  const existingTask = db
-    .prepare("SELECT * FROM tasks WHERE id = ? AND userId = ?")
-    .get(taskId, userId);
+  const existingTask = tasksRepository.findTaskByIdAndUserId(taskId, userId);
 
   if (!existingTask) {
     return createErrorResult(404, "TASK_NOT_FOUND", "Task not found.");
@@ -80,27 +63,16 @@ function updateTask(userId, taskId, payload) {
     createdAt: existingTask.createdAt
   };
 
-  db.prepare(
-    `
-    UPDATE tasks
-    SET title = @title,
-        category = @category,
-        priority = @priority,
-        deadline = @deadline,
-        completed = @completed
-    WHERE id = @id AND userId = @userId
-    `
-  ).run({
+  tasksRepository.updateTask({
     ...updatedTask,
-    title: updatedTask.title.trim(),
-    completed: Number(updatedTask.completed)
+    title: updatedTask.title.trim()
   });
 
   return { status: 200, body: updatedTask };
 }
 
 function deleteTask(userId, taskId) {
-  const result = db.prepare("DELETE FROM tasks WHERE id = ? AND userId = ?").run(taskId, userId);
+  const result = tasksRepository.deleteTaskByIdAndUserId(taskId, userId);
 
   if (result.changes === 0) {
     return createErrorResult(404, "TASK_NOT_FOUND", "Task not found.");
@@ -117,18 +89,11 @@ function clearCompletedTasks(userId, shouldDeleteCompleted) {
     );
   }
 
-  const result = db.prepare("DELETE FROM tasks WHERE completed = 1 AND userId = ?").run(userId);
+  const result = tasksRepository.clearCompletedTasksByUserId(userId);
 
   return {
     status: 200,
     body: { deletedCount: result.changes }
-  };
-}
-
-function mapTaskRow(task) {
-  return {
-    ...task,
-    completed: Boolean(task.completed)
   };
 }
 
