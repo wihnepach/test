@@ -5,9 +5,10 @@ const path = require("path");
 
 const ROOT_DIR = path.resolve(__dirname, "..");
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");
-const DATA_DIR = path.join(ROOT_DIR, "data");
-const LEGACY_DATABASE_PATH = path.join(ROOT_DIR, "todo.db");
-const DATABASE_PATH = path.join(DATA_DIR, "todo.db");
+const DATA_DIR = process.env.DATA_DIR || path.join(ROOT_DIR, "data");
+const LEGACY_DATABASE_PATH =
+  process.env.LEGACY_DATABASE_PATH || path.join(ROOT_DIR, "todo.db");
+const DATABASE_PATH = process.env.DATABASE_PATH || path.join(DATA_DIR, "todo.db");
 
 const ENCRYPTION_SECRET =
   process.env.AUTH_ENCRYPTION_KEY || "development-secret-change-me-before-production";
