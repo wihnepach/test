@@ -15,39 +15,34 @@ const {
   normalizeRegistrationPayload,
   normalizeLoginPayload,
   normalizeVerificationPayload,
-  isValidContact,
+  validateRegistrationPayload,
+  validateLoginPayload,
+  validateVerificationPayload,
   buildContactKey
 } = require("../utils/validators");
+const { createErrorResult, createValidationError } = require("../utils/errors");
 
 async function registerUser(payload) {
+  const validationDetails = validateRegistrationPayload(payload);
+
+  if (validationDetails.length > 0) {
+    return createValidationError(validationDetails, "Registration payload is invalid.");
+  }
+
   const normalizedPayload = normalizeRegistrationPayload(payload);
-
-  if (!normalizedPayload.name || !normalizedPayload.contact || !normalizedPayload.password) {
-    return { status: 400, body: { message: "Заполните имя, контакт и пароль." } };
-  }
-
-  if (!isValidContact(normalizedPayload.contactType, normalizedPayload.contact)) {
-    return { status: 400, body: { message: "Укажите корректный email или номер телефона." } };
-  }
-
-  if (normalizedPayload.password.length < 8) {
-    return { status: 400, body: { message: "Пароль должен содержать минимум 8 символов." } };
-  }
-
   const contactHash = hashValue(
     buildContactKey(normalizedPayload.contactType, normalizedPayload.contact)
   );
   const existingUser = db.prepare("SELECT id, isVerified FROM users WHERE contactHash = ?").get(contactHash);
 
   if (existingUser) {
-    return {
-      status: 409,
-      body: {
-        message: existingUser.isVerified
-          ? "Пользователь с таким контактом уже зарегистрирован."
-          : "Контакт уже зарегистрирован, подтвердите его кодом."
-      }
-    };
+    return createErrorResult(
+      409,
+      "CONTACT_EXISTS",
+      existingUser.isVerified
+        ? "User with this contact already exists."
+        : "Contact already exists but is not verified yet."
+    );
   }
 
   const verificationCode = generateVerificationCode();
@@ -80,8 +75,8 @@ async function registerUser(payload) {
   return {
     status: 201,
     body: {
-      message: `Код подтверждения отправлен на ${
-        normalizedPayload.contactType === "email" ? "email" : "телефон"
+      message: `Verification code sent to ${
+        normalizedPayload.contactType === "email" ? "email" : "phone"
       }.`,
       pendingContact: normalizedPayload.contact,
       contactType: normalizedPayload.contactType,
@@ -91,31 +86,32 @@ async function registerUser(payload) {
 }
 
 function verifyUser(payload) {
-  const normalizedPayload = normalizeVerificationPayload(payload);
+  const validationDetails = validateVerificationPayload(payload);
 
-  if (!normalizedPayload.contact || !normalizedPayload.code) {
-    return { status: 400, body: { message: "Введите контакт и код подтверждения." } };
+  if (validationDetails.length > 0) {
+    return createValidationError(validationDetails, "Verification payload is invalid.");
   }
 
+  const normalizedPayload = normalizeVerificationPayload(payload);
   const contactHash = hashValue(
     buildContactKey(normalizedPayload.contactType, normalizedPayload.contact)
   );
   const user = db.prepare("SELECT * FROM users WHERE contactHash = ?").get(contactHash);
 
   if (!user) {
-    return { status: 404, body: { message: "Пользователь не найден." } };
+    return createErrorResult(404, "USER_NOT_FOUND", "User not found.");
   }
 
   if (user.isVerified) {
-    return { status: 400, body: { message: "Контакт уже подтвержден." } };
+    return createErrorResult(400, "CONTACT_ALREADY_VERIFIED", "Contact is already verified.");
   }
 
   if (!user.verificationCodeHash || Date.now() > user.verificationExpiresAt) {
-    return { status: 400, body: { message: "Код подтверждения истек. Запросите новый." } };
+    return createErrorResult(400, "VERIFICATION_CODE_EXPIRED", "Verification code expired.");
   }
 
   if (hashValue(normalizedPayload.code) !== user.verificationCodeHash) {
-    return { status: 400, body: { message: "Неверный код подтверждения." } };
+    return createErrorResult(400, "INVALID_VERIFICATION_CODE", "Invalid verification code.");
   }
 
   db.prepare(
@@ -133,7 +129,7 @@ function verifyUser(payload) {
   return {
     status: 200,
     body: {
-      message: "Контакт успешно подтвержден. Вы вошли в систему.",
+      message: "Contact verified successfully. You are now logged in.",
       user: serializeUser(sessionUser)
     },
     userId: sessionUser.id
@@ -141,23 +137,27 @@ function verifyUser(payload) {
 }
 
 function resendVerificationCode(payload) {
-  const normalizedPayload = normalizeVerificationPayload(payload);
+  const validationDetails = validateVerificationPayload({
+    ...payload,
+    code: "000000"
+  }).filter((item) => item.field !== "code");
 
-  if (!normalizedPayload.contact) {
-    return { status: 400, body: { message: "Введите email или номер телефона." } };
+  if (validationDetails.length > 0) {
+    return createValidationError(validationDetails, "Verification resend payload is invalid.");
   }
 
+  const normalizedPayload = normalizeVerificationPayload(payload);
   const contactHash = hashValue(
     buildContactKey(normalizedPayload.contactType, normalizedPayload.contact)
   );
   const user = db.prepare("SELECT * FROM users WHERE contactHash = ?").get(contactHash);
 
   if (!user) {
-    return { status: 404, body: { message: "Пользователь не найден." } };
+    return createErrorResult(404, "USER_NOT_FOUND", "User not found.");
   }
 
   if (user.isVerified) {
-    return { status: 400, body: { message: "Контакт уже подтвержден." } };
+    return createErrorResult(400, "CONTACT_ALREADY_VERIFIED", "Contact is already verified.");
   }
 
   const verificationCode = generateVerificationCode();
@@ -178,42 +178,47 @@ function resendVerificationCode(payload) {
   return {
     status: 200,
     body: {
-      message: "Новый код подтверждения сформирован.",
+      message: "New verification code generated.",
       verificationPreview: env.NODE_ENV === "development" ? verificationCode : undefined
     }
   };
 }
 
 async function loginUser(payload) {
-  const normalizedPayload = normalizeLoginPayload(payload);
+  const validationDetails = validateLoginPayload(payload);
 
-  if (!normalizedPayload.contact || !normalizedPayload.password) {
-    return { status: 400, body: { message: "Введите контакт и пароль." } };
+  if (validationDetails.length > 0) {
+    return createValidationError(validationDetails, "Login payload is invalid.");
   }
 
+  const normalizedPayload = normalizeLoginPayload(payload);
   const contactHash = hashValue(
     buildContactKey(normalizedPayload.contactType, normalizedPayload.contact)
   );
   const user = db.prepare("SELECT * FROM users WHERE contactHash = ?").get(contactHash);
 
   if (!user) {
-    return { status: 401, body: { message: "Неверный логин или пароль." } };
+    return createErrorResult(401, "INVALID_CREDENTIALS", "Invalid login or password.");
   }
 
   if (!user.isVerified) {
-    return { status: 403, body: { message: "Сначала подтвердите email или номер телефона." } };
+    return createErrorResult(
+      403,
+      "CONTACT_NOT_VERIFIED",
+      "Please verify email or phone before logging in."
+    );
   }
 
   const passwordMatches = await bcrypt.compare(normalizedPayload.password, user.passwordHash);
 
   if (!passwordMatches) {
-    return { status: 401, body: { message: "Неверный логин или пароль." } };
+    return createErrorResult(401, "INVALID_CREDENTIALS", "Invalid login or password.");
   }
 
   return {
     status: 200,
     body: {
-      message: "Вход выполнен успешно.",
+      message: "Login successful.",
       user: serializeUser(user)
     },
     userId: user.id

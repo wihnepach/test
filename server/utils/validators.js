@@ -32,7 +32,7 @@ function normalizePriority(priority, partial = false) {
   }
 
   const value = priority.trim().toLowerCase();
-  return ["low", "medium", "high"].includes(value) ? value : "medium";
+  return ["low", "medium", "high"].includes(value) ? value : undefined;
 }
 
 function normalizeRegistrationPayload(payload = {}) {
@@ -76,6 +76,118 @@ function normalizeTaskPayload(payload = {}, partial = false) {
   };
 }
 
+function validateRegistrationPayload(payload = {}) {
+  const normalized = normalizeRegistrationPayload(payload);
+  const details = [];
+
+  if (!normalized.name) {
+    details.push({ field: "name", issue: "required" });
+  } else if (normalized.name.length < 2 || normalized.name.length > 80) {
+    details.push({ field: "name", issue: "length must be between 2 and 80" });
+  }
+
+  if (!normalized.contact) {
+    details.push({ field: "contact", issue: "required" });
+  } else if (!isValidContact(normalized.contactType, normalized.contact)) {
+    details.push({ field: "contact", issue: "invalid format" });
+  }
+
+  if (!normalized.password) {
+    details.push({ field: "password", issue: "required" });
+  } else if (normalized.password.length < 8 || normalized.password.length > 72) {
+    details.push({ field: "password", issue: "length must be between 8 and 72" });
+  }
+
+  return details;
+}
+
+function validateLoginPayload(payload = {}) {
+  const normalized = normalizeLoginPayload(payload);
+  const details = [];
+
+  if (!normalized.contact) {
+    details.push({ field: "contact", issue: "required" });
+  } else if (!isValidContact(normalized.contactType, normalized.contact)) {
+    details.push({ field: "contact", issue: "invalid format" });
+  }
+
+  if (!normalized.password) {
+    details.push({ field: "password", issue: "required" });
+  } else if (normalized.password.length > 72) {
+    details.push({ field: "password", issue: "must be 72 chars or less" });
+  }
+
+  return details;
+}
+
+function validateVerificationPayload(payload = {}) {
+  const normalized = normalizeVerificationPayload(payload);
+  const details = [];
+
+  if (!normalized.contact) {
+    details.push({ field: "contact", issue: "required" });
+  } else if (!isValidContact(normalized.contactType, normalized.contact)) {
+    details.push({ field: "contact", issue: "invalid format" });
+  }
+
+  if (!normalized.code) {
+    details.push({ field: "code", issue: "required" });
+  } else if (!/^\d{6}$/.test(normalized.code)) {
+    details.push({ field: "code", issue: "must be a 6-digit string" });
+  }
+
+  return details;
+}
+
+function validateTaskPayload(payload = {}, partial = false) {
+  const details = [];
+
+  if (!partial || Object.prototype.hasOwnProperty.call(payload, "title")) {
+    const title = typeof payload.title === "string" ? payload.title.trim() : "";
+
+    if (!title) {
+      details.push({ field: "title", issue: "required" });
+    } else if (title.length > 160) {
+      details.push({ field: "title", issue: "must be 160 chars or less" });
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, "category") && payload.category !== undefined) {
+    if (typeof payload.category !== "string") {
+      details.push({ field: "category", issue: "must be a string" });
+    } else if (payload.category.trim().length > 80) {
+      details.push({ field: "category", issue: "must be 80 chars or less" });
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, "priority") && payload.priority !== undefined) {
+    if (typeof payload.priority !== "string") {
+      details.push({ field: "priority", issue: "must be a string" });
+    } else if (!["low", "medium", "high"].includes(payload.priority.trim().toLowerCase())) {
+      details.push({ field: "priority", issue: "must be one of: low, medium, high" });
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, "deadline") && payload.deadline !== undefined) {
+    if (typeof payload.deadline !== "string") {
+      details.push({ field: "deadline", issue: "must be a string" });
+    } else {
+      const deadline = payload.deadline.trim();
+      if (deadline && Number.isNaN(Date.parse(deadline))) {
+        details.push({ field: "deadline", issue: "must be a valid date" });
+      }
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, "completed") && payload.completed !== undefined) {
+    if (typeof payload.completed !== "boolean") {
+      details.push({ field: "completed", issue: "must be a boolean" });
+    }
+  }
+
+  return details;
+}
+
 function buildContactKey(contactType, contact) {
   return `${normalizeContactType(contactType)}:${contact}`;
 }
@@ -89,5 +201,9 @@ module.exports = {
   normalizeLoginPayload,
   normalizeVerificationPayload,
   normalizeTaskPayload,
-  buildContactKey
+  buildContactKey,
+  validateRegistrationPayload,
+  validateLoginPayload,
+  validateVerificationPayload,
+  validateTaskPayload
 };

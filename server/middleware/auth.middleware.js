@@ -1,10 +1,12 @@
 const authService = require("../services/auth.service");
+const { createErrorResult } = require("../utils/errors");
 
 function requireAuth(request, response, next) {
   const sessionUser = authService.getSessionUser(request);
 
   if (!sessionUser) {
-    response.status(401).json({ message: "Сначала войдите в аккаунт." });
+    const authError = createErrorResult(401, "AUTH_REQUIRED", "Authentication required.");
+    response.status(authError.status).json(authError.body);
     return;
   }
 

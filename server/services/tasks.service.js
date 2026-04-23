@@ -1,7 +1,8 @@
 const { v4: uuidv4 } = require("uuid");
 
 const db = require("../db/database");
-const { normalizeTaskPayload } = require("../utils/validators");
+const { normalizeTaskPayload, validateTaskPayload } = require("../utils/validators");
+const { createErrorResult, createValidationError } = require("../utils/errors");
 
 function listTasks(userId) {
   return db
@@ -18,18 +19,19 @@ function listTasks(userId) {
 }
 
 function createTask(userId, payload) {
-  const normalizedPayload = normalizeTaskPayload(payload);
+  const validationDetails = validateTaskPayload(payload, false);
 
-  if (!normalizedPayload.title) {
-    return { status: 400, body: { message: "Название задачи обязательно." } };
+  if (validationDetails.length > 0) {
+    return createValidationError(validationDetails, "Task payload is invalid.");
   }
 
+  const normalizedPayload = normalizeTaskPayload(payload);
   const task = {
     id: uuidv4(),
     userId,
     title: normalizedPayload.title,
     category: normalizedPayload.category,
-    priority: normalizedPayload.priority,
+    priority: normalizedPayload.priority || "medium",
     deadline: normalizedPayload.deadline,
     completed: false,
     createdAt: Date.now()
@@ -54,7 +56,13 @@ function updateTask(userId, taskId, payload) {
     .get(taskId, userId);
 
   if (!existingTask) {
-    return { status: 404, body: { message: "Задача не найдена." } };
+    return createErrorResult(404, "TASK_NOT_FOUND", "Task not found.");
+  }
+
+  const validationDetails = validateTaskPayload(payload, true);
+
+  if (validationDetails.length > 0) {
+    return createValidationError(validationDetails, "Task payload is invalid.");
   }
 
   const normalizedPayload = normalizeTaskPayload(payload, true);
@@ -71,10 +79,6 @@ function updateTask(userId, taskId, payload) {
         : Boolean(existingTask.completed),
     createdAt: existingTask.createdAt
   };
-
-  if (!updatedTask.title.trim()) {
-    return { status: 400, body: { message: "Название задачи не может быть пустым." } };
-  }
 
   db.prepare(
     `
@@ -99,7 +103,7 @@ function deleteTask(userId, taskId) {
   const result = db.prepare("DELETE FROM tasks WHERE id = ? AND userId = ?").run(taskId, userId);
 
   if (result.changes === 0) {
-    return { status: 404, body: { message: "Задача не найдена." } };
+    return createErrorResult(404, "TASK_NOT_FOUND", "Task not found.");
   }
 
   return { status: 204 };
@@ -107,12 +111,13 @@ function deleteTask(userId, taskId) {
 
 function clearCompletedTasks(userId, shouldDeleteCompleted) {
   if (!shouldDeleteCompleted) {
-    return { status: 400, body: { message: "Укажите completed=true для очистки." } };
+    return createValidationError(
+      [{ field: "completed", issue: "query parameter completed=true is required" }],
+      "Task cleanup query is invalid."
+    );
   }
 
-  const result = db
-    .prepare("DELETE FROM tasks WHERE completed = 1 AND userId = ?")
-    .run(userId);
+  const result = db.prepare("DELETE FROM tasks WHERE completed = 1 AND userId = ?").run(userId);
 
   return {
     status: 200,

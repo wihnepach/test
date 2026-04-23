@@ -61,6 +61,7 @@ test("updateTask returns 404 for missing task", () => {
   });
 
   assert.equal(updateResult.status, 404);
+  assert.equal(updateResult.body.code, "TASK_NOT_FOUND");
 });
 
 test("clearCompletedTasks removes only completed tasks", () => {
@@ -79,4 +80,21 @@ test("clearCompletedTasks removes only completed tasks", () => {
   assert.equal(tasks.length, 1);
   assert.equal(tasks[0].id, secondTask.body.id);
   assert.equal(tasks[0].completed, false);
+});
+
+test("createTask validates incoming payload", () => {
+  seedUser("user-1");
+
+  const result = tasksService.createTask("user-1", {
+    title: "",
+    priority: "urgent"
+  });
+
+  assert.equal(result.status, 400);
+  assert.equal(result.body.code, "VALIDATION_ERROR");
+  assert.ok(Array.isArray(result.body.details));
+});
+
+test.after(() => {
+  db.close();
 });

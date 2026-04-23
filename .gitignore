@@ -8,3 +8,6 @@ todo.db-wal
 
 # Локальные переменные окружения
 .env
+
+# Test artifacts
+.tmp-tests/

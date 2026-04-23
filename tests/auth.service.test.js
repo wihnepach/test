@@ -21,6 +21,9 @@ test("registerUser rejects invalid contact", async () => {
   });
 
   assert.equal(result.status, 400);
+  assert.equal(result.body.code, "VALIDATION_ERROR");
+  assert.ok(Array.isArray(result.body.details));
+  assert.equal(result.body.details[0].field, "contact");
 });
 
 test("login is blocked until contact verification is completed", async () => {
@@ -38,6 +41,7 @@ test("login is blocked until contact verification is completed", async () => {
     password: "password123"
   });
   assert.equal(loginBeforeVerify.status, 403);
+  assert.equal(loginBeforeVerify.body.code, "CONTACT_NOT_VERIFIED");
 
   const verifyResult = authService.verifyUser({
     contactType: "email",
@@ -72,4 +76,9 @@ test("registerUser rejects duplicate contact", async () => {
     password: "password456"
   });
   assert.equal(secondRegistration.status, 409);
+  assert.equal(secondRegistration.body.code, "CONTACT_EXISTS");
+});
+
+test.after(() => {
+  db.close();
 });

@@ -32,6 +32,8 @@ test.after(async () => {
       resolve();
     });
   });
+
+  db.close();
 });
 
 test.beforeEach(() => {
@@ -108,6 +110,9 @@ test("register -> verify -> create task -> list tasks", async () => {
 test("tasks endpoint requires auth session", async () => {
   const response = await request("/api/tasks");
   assert.equal(response.status, 401);
+  const data = await response.json();
+  assert.equal(data.code, "AUTH_REQUIRED");
+  assert.equal(typeof data.message, "string");
 });
 
 test("login fails with wrong password", async () => {
@@ -141,4 +146,16 @@ test("login fails with wrong password", async () => {
     }
   });
   assert.equal(loginResponse.status, 401);
+  const loginData = await loginResponse.json();
+  assert.equal(loginData.code, "INVALID_CREDENTIALS");
+});
+
+test("unknown route returns standardized not-found error", async () => {
+  const response = await request("/api/does-not-exist");
+
+  assert.equal(response.status, 404);
+
+  const data = await response.json();
+  assert.equal(data.code, "NOT_FOUND");
+  assert.equal(typeof data.message, "string");
 });
