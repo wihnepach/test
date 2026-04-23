@@ -18,6 +18,14 @@ async function initializeTaskManager() {
     await window.appShellReady;
   }
 
+  const uiState = {
+    pageSize: 12,
+    visibleLimit: 12,
+    selectedTaskIds: new Set(),
+    manualOrderIds: [],
+    draggedTaskId: null
+  };
+
   const elements = {
     taskStatusBanner: document.getElementById("taskStatusBanner"),
     form: document.getElementById("taskForm"),
@@ -35,28 +43,42 @@ async function initializeTaskManager() {
     totalCount: document.getElementById("totalCount"),
     completedCount: document.getElementById("completedCount"),
     activeCount: document.getElementById("activeCount"),
-    taskSummary: document.getElementById("taskSummary")
+    taskSummary: document.getElementById("taskSummary"),
+    selectVisibleBtn: document.getElementById("selectVisibleBtn"),
+    markSelectedCompletedBtn: document.getElementById("markSelectedCompletedBtn"),
+    deleteSelectedBtn: document.getElementById("deleteSelectedBtn"),
+    loadMoreWrap: document.getElementById("loadMoreWrap"),
+    loadMoreInfo: document.getElementById("loadMoreInfo"),
+    loadMoreBtn: document.getElementById("loadMoreBtn")
   };
 
   elements.form.addEventListener("submit", handleTaskSubmit);
-  elements.searchInput.addEventListener("input", renderTasks);
-  elements.statusFilter.addEventListener("change", renderTasks);
-  elements.sortSelect.addEventListener("change", renderTasks);
+  elements.searchInput.addEventListener("input", handleQueryChange);
+  elements.statusFilter.addEventListener("change", handleQueryChange);
+  elements.sortSelect.addEventListener("change", handleQueryChange);
   elements.clearCompletedBtn.addEventListener("click", clearCompletedTasks);
+  elements.selectVisibleBtn.addEventListener("click", toggleSelectVisible);
+  elements.markSelectedCompletedBtn.addEventListener("click", completeSelectedTasks);
+  elements.deleteSelectedBtn.addEventListener("click", deleteSelectedTasks);
+  elements.loadMoreBtn.addEventListener("click", loadMoreTasks);
 
   taskManager.loadTasks = loadTasks;
   taskManager.renderTasks = renderTasks;
   renderTasks();
 
   async function loadTasks() {
-    window.showBanner(elements.taskStatusBanner, "Загрузка задач...", "info");
+    showInfo("Loading tasks...");
 
     try {
       window.appState.tasks = await window.request("/api/tasks");
+      hydrateManualOrder();
+      syncManualOrderWithTasks();
+      uiState.selectedTaskIds.clear();
+      uiState.visibleLimit = uiState.pageSize;
       window.hideBanner(elements.taskStatusBanner);
       renderTasks();
     } catch (error) {
-      window.showBanner(elements.taskStatusBanner, `Не удалось загрузить задачи. ${error.message}`, "error");
+      showError(`Failed to load tasks. ${error.message}`);
     }
   }
 
@@ -83,24 +105,33 @@ async function initializeTaskManager() {
       });
 
       window.appState.tasks.unshift(createdTask);
+      syncManualOrderWithTasks(true);
       elements.form.reset();
       elements.priorityInput.value = "medium";
       elements.taskInput.focus();
+      uiState.visibleLimit = uiState.pageSize;
       window.hideBanner(elements.taskStatusBanner);
       renderTasks();
     } catch (error) {
-      window.showBanner(elements.taskStatusBanner, `Не удалось создать задачу. ${error.message}`, "error");
+      showError(`Failed to create task. ${error.message}`);
     }
   }
 
   function renderTasks() {
+    pruneSelectedIds();
+
     const preparedTasks = getPreparedTasks();
+    const visibleTasks = preparedTasks.slice(0, uiState.visibleLimit);
+    const canDrag = canUseManualOrder();
+
     elements.taskList.innerHTML = "";
 
     elements.emptyState.classList.toggle("empty-state--visible", preparedTasks.length === 0);
 
-    preparedTasks.forEach((task) => {
+    visibleTasks.forEach((task) => {
       const taskNode = elements.taskTemplate.content.firstElementChild.cloneNode(true);
+      const dragHandle = taskNode.querySelector(".drag-handle");
+      const select = taskNode.querySelector(".task-select");
       const toggle = taskNode.querySelector(".task-toggle");
       const title = taskNode.querySelector(".task-title");
       const priorityBadge = taskNode.querySelector(".priority-badge");
@@ -112,6 +143,25 @@ async function initializeTaskManager() {
 
       taskNode.dataset.id = task.id;
       taskNode.classList.toggle("task-item--completed", task.completed);
+      taskNode.classList.toggle("task-item--drag-enabled", canDrag);
+
+      taskNode.draggable = canDrag;
+      dragHandle.hidden = !canDrag;
+
+      if (canDrag) {
+        taskNode.addEventListener("dragstart", () => handleDragStart(task.id, taskNode));
+        taskNode.addEventListener("dragover", (event) => handleDragOver(event, taskNode));
+        taskNode.addEventListener("dragleave", () => taskNode.classList.remove("task-item--drag-over"));
+        taskNode.addEventListener("drop", () => handleDrop(task.id));
+        taskNode.addEventListener("dragend", () => {
+          uiState.draggedTaskId = null;
+          taskNode.classList.remove("task-item--dragging");
+          taskNode.classList.remove("task-item--drag-over");
+        });
+      }
+
+      select.checked = uiState.selectedTaskIds.has(task.id);
+      select.addEventListener("change", () => toggleTaskSelection(task.id, select.checked));
 
       toggle.checked = task.completed;
       toggle.addEventListener("change", () => toggleTaskStatus(task.id));
@@ -119,9 +169,9 @@ async function initializeTaskManager() {
       title.textContent = task.title;
       priorityBadge.textContent = priorityLabel(task.priority);
       priorityBadge.dataset.priority = task.priority;
-      category.textContent = task.category ? `Категория: ${task.category}` : "Без категории";
-      created.textContent = `Создано: ${formatDate(task.createdAt)}`;
-      deadline.textContent = task.deadline ? `Дедлайн: ${formatDate(task.deadline)}` : "Без дедлайна";
+      category.textContent = task.category ? `Category: ${task.category}` : "No category";
+      created.textContent = `Created: ${formatDate(task.createdAt)}`;
+      deadline.textContent = task.deadline ? `Deadline: ${formatDate(task.deadline)}` : "No deadline";
 
       editButton.addEventListener("click", () => editTask(task.id));
       deleteButton.addEventListener("click", () => deleteTask(task.id));
@@ -129,8 +179,10 @@ async function initializeTaskManager() {
       elements.taskList.append(taskNode);
     });
 
+    updateLoadMore(preparedTasks.length, visibleTasks.length);
     updateSummary(preparedTasks.length);
     updateCounters();
+    updateBulkControls(visibleTasks);
   }
 
   function getPreparedTasks() {
@@ -150,7 +202,21 @@ async function initializeTaskManager() {
       return matchesSearch && matchesStatus;
     });
 
-    filteredTasks.sort((firstTask, secondTask) => {
+    if (elements.sortSelect.value === "manual") {
+      const orderMap = new Map(uiState.manualOrderIds.map((id, index) => [id, index]));
+      return filteredTasks.sort((firstTask, secondTask) => {
+        const firstIndex = orderMap.has(firstTask.id) ? orderMap.get(firstTask.id) : Number.MAX_SAFE_INTEGER;
+        const secondIndex = orderMap.has(secondTask.id) ? orderMap.get(secondTask.id) : Number.MAX_SAFE_INTEGER;
+
+        if (firstIndex !== secondIndex) {
+          return firstIndex - secondIndex;
+        }
+
+        return secondTask.createdAt - firstTask.createdAt;
+      });
+    }
+
+    return filteredTasks.sort((firstTask, secondTask) => {
       switch (elements.sortSelect.value) {
         case "oldest":
           return firstTask.createdAt - secondTask.createdAt;
@@ -163,8 +229,6 @@ async function initializeTaskManager() {
           return secondTask.createdAt - firstTask.createdAt;
       }
     });
-
-    return filteredTasks;
   }
 
   async function toggleTaskStatus(taskId) {
@@ -191,7 +255,7 @@ async function initializeTaskManager() {
       window.hideBanner(elements.taskStatusBanner);
       renderTasks();
     } catch (error) {
-      window.showBanner(elements.taskStatusBanner, `Не удалось изменить статус задачи. ${error.message}`, "error");
+      showError(`Failed to update task status. ${error.message}`);
     }
   }
 
@@ -202,7 +266,7 @@ async function initializeTaskManager() {
       return;
     }
 
-    const nextTitle = window.prompt("Измените текст задачи:", task.title);
+    const nextTitle = window.prompt("Edit task title:", task.title);
 
     if (nextTitle === null) {
       return;
@@ -211,24 +275,24 @@ async function initializeTaskManager() {
     const trimmedTitle = nextTitle.trim();
 
     if (!trimmedTitle) {
-      window.alert("Название задачи не может быть пустым.");
+      window.alert("Task title cannot be empty.");
       return;
     }
 
-    const nextCategory = window.prompt("Измените категорию:", task.category);
+    const nextCategory = window.prompt("Edit category:", task.category);
 
     if (nextCategory === null) {
       return;
     }
 
-    const nextPriority = window.prompt("Введите приоритет: low, medium или high", task.priority);
+    const nextPriority = window.prompt("Enter priority: low, medium or high", task.priority);
 
     if (nextPriority === null) {
       return;
     }
 
     const nextDeadline = window.prompt(
-      "Введите дедлайн в формате YYYY-MM-DDTHH:MM или оставьте пустым:",
+      "Enter deadline in format YYYY-MM-DDTHH:MM or leave empty:",
       task.deadline
     );
 
@@ -253,7 +317,7 @@ async function initializeTaskManager() {
       window.hideBanner(elements.taskStatusBanner);
       renderTasks();
     } catch (error) {
-      window.showBanner(elements.taskStatusBanner, `Не удалось сохранить изменения. ${error.message}`, "error");
+      showError(`Failed to save task changes. ${error.message}`);
     }
   }
 
@@ -261,10 +325,12 @@ async function initializeTaskManager() {
     try {
       await window.request(`/api/tasks/${taskId}`, { method: "DELETE" });
       window.appState.tasks = window.appState.tasks.filter((task) => task.id !== taskId);
+      uiState.selectedTaskIds.delete(taskId);
+      syncManualOrderWithTasks();
       window.hideBanner(elements.taskStatusBanner);
       renderTasks();
     } catch (error) {
-      window.showBanner(elements.taskStatusBanner, `Не удалось удалить задачу. ${error.message}`, "error");
+      showError(`Failed to delete task. ${error.message}`);
     }
   }
 
@@ -272,18 +338,182 @@ async function initializeTaskManager() {
     const completedTasks = window.appState.tasks.filter((task) => task.completed).length;
 
     if (completedTasks === 0) {
-      window.alert("Нет выполненных задач для удаления.");
+      window.alert("No completed tasks to clear.");
       return;
     }
 
     try {
       await window.request("/api/tasks?completed=true", { method: "DELETE" });
       window.appState.tasks = window.appState.tasks.filter((task) => !task.completed);
+      pruneSelectedIds();
+      syncManualOrderWithTasks();
       window.hideBanner(elements.taskStatusBanner);
       renderTasks();
     } catch (error) {
-      window.showBanner(elements.taskStatusBanner, `Не удалось очистить выполненные задачи. ${error.message}`, "error");
+      showError(`Failed to clear completed tasks. ${error.message}`);
     }
+  }
+
+  function toggleTaskSelection(taskId, isSelected) {
+    if (isSelected) {
+      uiState.selectedTaskIds.add(taskId);
+    } else {
+      uiState.selectedTaskIds.delete(taskId);
+    }
+
+    updateBulkControls(getPreparedTasks().slice(0, uiState.visibleLimit));
+  }
+
+  function toggleSelectVisible() {
+    const visibleTasks = getPreparedTasks().slice(0, uiState.visibleLimit);
+    const allVisibleSelected =
+      visibleTasks.length > 0 && visibleTasks.every((task) => uiState.selectedTaskIds.has(task.id));
+
+    visibleTasks.forEach((task) => {
+      if (allVisibleSelected) {
+        uiState.selectedTaskIds.delete(task.id);
+      } else {
+        uiState.selectedTaskIds.add(task.id);
+      }
+    });
+
+    renderTasks();
+  }
+
+  async function completeSelectedTasks() {
+    const selectedTasks = window.appState.tasks.filter((task) => uiState.selectedTaskIds.has(task.id));
+
+    if (selectedTasks.length === 0) {
+      window.alert("Select at least one task.");
+      return;
+    }
+
+    const targets = selectedTasks.filter((task) => !task.completed);
+
+    if (targets.length === 0) {
+      window.alert("Selected tasks are already completed.");
+      return;
+    }
+
+    try {
+      await Promise.all(
+        targets.map((task) =>
+          window.request(`/api/tasks/${task.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title: task.title,
+              category: task.category,
+              priority: task.priority,
+              deadline: task.deadline,
+              completed: true
+            })
+          })
+        )
+      );
+
+      window.appState.tasks = window.appState.tasks.map((task) =>
+        uiState.selectedTaskIds.has(task.id) ? { ...task, completed: true } : task
+      );
+      window.hideBanner(elements.taskStatusBanner);
+      renderTasks();
+    } catch (error) {
+      showError(`Failed to complete selected tasks. ${error.message}`);
+    }
+  }
+
+  async function deleteSelectedTasks() {
+    const selectedIds = Array.from(uiState.selectedTaskIds);
+
+    if (selectedIds.length === 0) {
+      window.alert("Select at least one task.");
+      return;
+    }
+
+    const shouldDelete = window.confirm(`Delete selected tasks: ${selectedIds.length}?`);
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      await Promise.all(selectedIds.map((taskId) => window.request(`/api/tasks/${taskId}`, { method: "DELETE" })));
+      window.appState.tasks = window.appState.tasks.filter((task) => !uiState.selectedTaskIds.has(task.id));
+      uiState.selectedTaskIds.clear();
+      syncManualOrderWithTasks();
+      window.hideBanner(elements.taskStatusBanner);
+      renderTasks();
+    } catch (error) {
+      showError(`Failed to delete selected tasks. ${error.message}`);
+    }
+  }
+
+  function handleDragStart(taskId, node) {
+    uiState.draggedTaskId = taskId;
+    node.classList.add("task-item--dragging");
+  }
+
+  function handleDragOver(event, node) {
+    if (!uiState.draggedTaskId) {
+      return;
+    }
+
+    event.preventDefault();
+    node.classList.add("task-item--drag-over");
+  }
+
+  function handleDrop(targetTaskId) {
+    if (!canUseManualOrder() || !uiState.draggedTaskId || uiState.draggedTaskId === targetTaskId) {
+      return;
+    }
+
+    const order = [...uiState.manualOrderIds];
+    const draggedIndex = order.indexOf(uiState.draggedTaskId);
+    const targetIndex = order.indexOf(targetTaskId);
+
+    if (draggedIndex < 0 || targetIndex < 0) {
+      return;
+    }
+
+    order.splice(draggedIndex, 1);
+    order.splice(targetIndex, 0, uiState.draggedTaskId);
+    uiState.manualOrderIds = order;
+    persistManualOrder();
+    renderTasks();
+  }
+
+  function canUseManualOrder() {
+    return elements.sortSelect.value === "manual";
+  }
+
+  function handleQueryChange() {
+    uiState.visibleLimit = uiState.pageSize;
+    renderTasks();
+  }
+
+  function loadMoreTasks() {
+    uiState.visibleLimit += uiState.pageSize;
+    renderTasks();
+  }
+
+  function updateLoadMore(totalPreparedCount, visibleCount) {
+    const hasMore = visibleCount < totalPreparedCount;
+    elements.loadMoreWrap.hidden = !hasMore;
+
+    if (hasMore) {
+      const remaining = totalPreparedCount - visibleCount;
+      elements.loadMoreInfo.textContent = `Showing ${visibleCount} of ${totalPreparedCount}. Remaining: ${remaining}.`;
+    }
+  }
+
+  function updateBulkControls(visibleTasks) {
+    const selectedCount = uiState.selectedTaskIds.size;
+    const allVisibleSelected =
+      visibleTasks.length > 0 && visibleTasks.every((task) => uiState.selectedTaskIds.has(task.id));
+
+    elements.selectVisibleBtn.textContent = allVisibleSelected ? "Unselect visible" : "Select visible";
+    elements.markSelectedCompletedBtn.disabled = selectedCount === 0;
+    elements.deleteSelectedBtn.disabled = selectedCount === 0;
   }
 
   function replaceTask(updatedTask) {
@@ -303,11 +533,88 @@ async function initializeTaskManager() {
 
   function updateSummary(visibleCount) {
     if (window.appState.tasks.length === 0) {
-      elements.taskSummary.textContent = window.appState.currentUser ? "Нет задач" : "Войдите в аккаунт";
+      elements.taskSummary.textContent = window.appState.currentUser ? "No tasks yet" : "Sign in to manage tasks";
       return;
     }
 
-    elements.taskSummary.textContent = `Показано задач: ${visibleCount} из ${window.appState.tasks.length}`;
+    const selectedCount = uiState.selectedTaskIds.size;
+    elements.taskSummary.textContent =
+      `Visible: ${visibleCount} of ${window.appState.tasks.length}` +
+      (selectedCount > 0 ? ` � Selected: ${selectedCount}` : "");
+  }
+
+  function pruneSelectedIds() {
+    const allTaskIds = new Set(window.appState.tasks.map((task) => task.id));
+
+    for (const taskId of uiState.selectedTaskIds) {
+      if (!allTaskIds.has(taskId)) {
+        uiState.selectedTaskIds.delete(taskId);
+      }
+    }
+  }
+
+  function syncManualOrderWithTasks(prependNewest = false) {
+    const known = new Set(window.appState.tasks.map((task) => task.id));
+    uiState.manualOrderIds = uiState.manualOrderIds.filter((id) => known.has(id));
+
+    const existing = new Set(uiState.manualOrderIds);
+    const missingIds = window.appState.tasks
+      .map((task) => task.id)
+      .filter((taskId) => !existing.has(taskId));
+
+    if (missingIds.length > 0) {
+      if (prependNewest) {
+        uiState.manualOrderIds = [...missingIds, ...uiState.manualOrderIds];
+      } else {
+        uiState.manualOrderIds.push(...missingIds);
+      }
+    }
+
+    persistManualOrder();
+  }
+
+  function manualOrderStorageKey() {
+    const userId = window.appState.currentUser && window.appState.currentUser.id;
+
+    if (!userId) {
+      return null;
+    }
+
+    return `taskflow.manualOrder.${userId}`;
+  }
+
+  function hydrateManualOrder() {
+    const storageKey = manualOrderStorageKey();
+
+    if (!storageKey) {
+      uiState.manualOrderIds = [];
+      return;
+    }
+
+    try {
+      const value = localStorage.getItem(storageKey);
+      uiState.manualOrderIds = value ? JSON.parse(value) : [];
+    } catch (error) {
+      uiState.manualOrderIds = [];
+    }
+  }
+
+  function persistManualOrder() {
+    const storageKey = manualOrderStorageKey();
+
+    if (!storageKey) {
+      return;
+    }
+
+    localStorage.setItem(storageKey, JSON.stringify(uiState.manualOrderIds));
+  }
+
+  function showError(message) {
+    window.showBanner(elements.taskStatusBanner, message, "error");
+  }
+
+  function showInfo(message) {
+    window.showBanner(elements.taskStatusBanner, message, "info");
   }
 }
 
@@ -319,7 +626,7 @@ function formatDate(value) {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return "Некорректная дата";
+    return "Invalid date";
   }
 
   return new Intl.DateTimeFormat("ru-RU", {
@@ -349,9 +656,9 @@ function priorityWeight(priority) {
 
 function priorityLabel(priority) {
   const labels = {
-    low: "Низкий приоритет",
-    medium: "Средний приоритет",
-    high: "Высокий приоритет"
+    low: "Low priority",
+    medium: "Medium priority",
+    high: "High priority"
   };
 
   return labels[priority] ?? labels.medium;
