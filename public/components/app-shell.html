@@ -1,0 +1,167 @@
+<main class="app">
+  <header class="topbar">
+    <div class="brand-block">
+      <p class="eyebrow eyebrow--small">TaskFlow</p>
+      <strong class="brand-title">Планируй. Выполняй. Успевай.</strong>
+    </div>
+    <button class="primary-button topbar__auth-button" id="openAuthModalBtn" type="button">Войти</button>
+  </header>
+
+  <section class="hero">
+    <div class="hero__content">
+      <p class="eyebrow">Личный планировщик задач</p>
+      <h1>Все важные дела в одном спокойном и понятном пространстве</h1>
+      <p class="hero__text">
+        Управляйте задачами, отслеживайте прогресс и держите фокус на действительно важном без лишнего шума.
+      </p>
+    </div>
+
+    <div class="stats" aria-label="Статистика задач">
+      <article class="stat-card">
+        <span class="stat-card__label">Всего</span>
+        <strong class="stat-card__value" id="totalCount">0</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-card__label">Выполнено</span>
+        <strong class="stat-card__value" id="completedCount">0</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-card__label">Активно</span>
+        <strong class="stat-card__value" id="activeCount">0</strong>
+      </article>
+    </div>
+  </section>
+
+  <section class="panel account-panel" id="accountPanel" hidden>
+    <div class="account-card">
+      <div>
+        <p class="eyebrow eyebrow--small">Личный кабинет</p>
+        <h2 id="accountTitle">Добро пожаловать</h2>
+        <p class="account-card__text" id="accountSubtitle">
+          Вы авторизованы и можете работать со своими задачами.
+        </p>
+      </div>
+      <button class="secondary-button" id="logoutBtn" type="button">Выйти</button>
+    </div>
+  </section>
+
+  <section class="panel" id="todoPanel" hidden>
+    <form class="task-form" id="taskForm">
+      <div class="field field--wide">
+        <label for="taskInput">Новая задача</label>
+        <input
+          id="taskInput"
+          name="taskInput"
+          type="text"
+          maxlength="120"
+          placeholder="Например: Подготовить презентацию"
+          required
+        >
+      </div>
+
+      <div class="field">
+        <label for="categoryInput">Категория</label>
+        <input
+          id="categoryInput"
+          name="categoryInput"
+          type="text"
+          maxlength="40"
+          placeholder="Учёба / Работа / Дом"
+        >
+      </div>
+
+      <div class="field">
+        <label for="priorityInput">Приоритет</label>
+        <select id="priorityInput" name="priorityInput">
+          <option value="low">Низкий</option>
+          <option value="medium" selected>Средний</option>
+          <option value="high">Высокий</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="deadlineInput">Дедлайн</label>
+        <input id="deadlineInput" name="deadlineInput" type="datetime-local">
+      </div>
+
+      <button class="primary-button" type="submit">Добавить задачу</button>
+    </form>
+
+    <div class="toolbar">
+      <div class="toolbar__group">
+        <label class="sr-only" for="searchInput">Поиск задач</label>
+        <input id="searchInput" type="search" placeholder="Поиск по задачам">
+      </div>
+
+      <div class="toolbar__group">
+        <label class="sr-only" for="statusFilter">Фильтр по статусу</label>
+        <select id="statusFilter">
+          <option value="all">Все</option>
+          <option value="active">Невыполненные</option>
+          <option value="completed">Выполненные</option>
+        </select>
+      </div>
+
+      <div class="toolbar__group">
+        <label class="sr-only" for="sortSelect">Сортировка</label>
+        <select id="sortSelect">
+          <option value="newest">Сначала новые</option>
+          <option value="oldest">Сначала старые</option>
+          <option value="deadline">По дедлайну</option>
+          <option value="priority">По приоритету</option>
+        </select>
+      </div>
+
+      <button class="secondary-button" id="clearCompletedBtn" type="button">
+        Очистить выполненные
+      </button>
+    </div>
+
+    <section class="task-section" aria-live="polite">
+      <div class="task-section__header">
+        <h2>Список задач</h2>
+        <p id="taskSummary">Нет задач</p>
+      </div>
+
+      <div class="status-banner" id="taskStatusBanner" hidden></div>
+
+      <ul class="task-list" id="taskList"></ul>
+
+      <div class="empty-state" id="emptyState">
+        <h3>Список пока пуст</h3>
+        <p>Добавь первую задачу и начни управлять делами в одном месте.</p>
+      </div>
+    </section>
+  </section>
+</main>
+
+<div id="authMount"></div>
+
+<template id="taskTemplate">
+  <li class="task-item">
+    <div class="task-item__main">
+      <label class="checkbox">
+        <input class="task-toggle" type="checkbox">
+        <span></span>
+      </label>
+
+      <div class="task-item__content">
+        <div class="task-item__top">
+          <h3 class="task-title"></h3>
+          <span class="priority-badge"></span>
+        </div>
+
+        <div class="task-meta">
+          <span class="task-category"></span>
+          <span class="task-created"></span>
+          <span class="task-deadline"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="task-item__actions">
+      <button class="icon-button edit-button" type="button">Редактировать</button>
+      <button class="icon-button delete-button" type="button">Удалить</button>
+    </div>
+  </li>
+</template>
