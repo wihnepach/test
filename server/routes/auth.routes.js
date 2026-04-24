@@ -29,4 +29,6 @@ router.get("/session", asyncHandler(authController.session));
 
 router.post("/logout", asyncHandler(authController.logout));
 
+router.post("/logout-all", asyncHandler(authController.logoutAll));
+
 module.exports = router;

@@ -69,12 +69,15 @@ function normalizeTaskPayload(payload = {}, partial = false) {
   const normalizedTitle = typeof payload.title === "string" ? payload.title.trim() : "";
   const normalizedCategory =
     typeof payload.category === "string" ? payload.category.trim() : partial ? undefined : "";
+  const normalizedNotes =
+    typeof payload.notes === "string" ? payload.notes.trim() : partial ? undefined : "";
   const normalizedDeadline =
     typeof payload.deadline === "string" ? payload.deadline.trim() : partial ? undefined : "";
 
   return {
     title: partial ? normalizedTitle || undefined : normalizedTitle,
     category: normalizedCategory,
+    notes: normalizedNotes,
     priority: normalizePriority(payload.priority, partial),
     deadline: normalizedDeadline,
     completed: typeof payload.completed === "boolean" ? payload.completed : undefined
@@ -162,6 +165,14 @@ function validateTaskPayload(payload = {}, partial = false) {
       details.push({ field: "category", issue: "must be a string" });
     } else if (payload.category.trim().length > 80) {
       details.push({ field: "category", issue: "must be 80 chars or less" });
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, "notes") && payload.notes !== undefined) {
+    if (typeof payload.notes !== "string") {
+      details.push({ field: "notes", issue: "must be a string" });
+    } else if (payload.notes.trim().length > 1000) {
+      details.push({ field: "notes", issue: "must be 1000 chars or less" });
     }
   }
 

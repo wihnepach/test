@@ -47,9 +47,11 @@ function setupDatabase() {
       userId TEXT,
       title TEXT NOT NULL,
       category TEXT DEFAULT '',
+      notes TEXT DEFAULT '',
       priority TEXT NOT NULL DEFAULT 'medium',
       deadline TEXT DEFAULT '',
       completed INTEGER NOT NULL DEFAULT 0,
+      deletedAt INTEGER,
       createdAt INTEGER NOT NULL,
       FOREIGN KEY (userId) REFERENCES users (id) ON DELETE CASCADE
     );
@@ -66,5 +68,15 @@ function setupDatabase() {
     db.exec("ALTER TABLE tasks ADD COLUMN userId TEXT");
   }
 
+  if (!columns.includes("notes")) {
+    db.exec("ALTER TABLE tasks ADD COLUMN notes TEXT DEFAULT ''");
+  }
+
+  if (!columns.includes("deletedAt")) {
+    db.exec("ALTER TABLE tasks ADD COLUMN deletedAt INTEGER");
+  }
+
   db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_userId ON tasks (userId)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_user_created ON tasks (userId, createdAt DESC)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_user_deleted ON tasks (userId, deletedAt)");
 }

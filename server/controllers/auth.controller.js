@@ -40,7 +40,8 @@ async function session(request, response) {
 
   response.json({
     authenticated: true,
-    user: authService.serializeUser(sessionUser)
+    user: authService.serializeUser(sessionUser),
+    security: authService.getSessionSummary(sessionUser)
   });
 }
 
@@ -49,11 +50,17 @@ async function logout(request, response) {
   response.json({ message: "Logged out." });
 }
 
+async function logoutAll(request, response) {
+  authService.destroyAllSessions(request, response);
+  response.json({ message: "All sessions logged out." });
+}
+
 module.exports = {
   register,
   verify,
   resendVerification,
   login,
   session,
-  logout
+  logout,
+  logoutAll
 };

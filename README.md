@@ -3,6 +3,7 @@
 ## 1. Project Snapshot
 
 TaskFlow is a production-style To-Do web application with:
+
 - account system (email/phone + verification + session auth)
 - full task lifecycle (CRUD, filtering, search, sorting, bulk actions)
 - persistent storage in SQLite
@@ -18,6 +19,7 @@ This repository demonstrates not just "a working to-do list", but a complete eng
 ## 2. Feature Matrix (What Works)
 
 ### 2.1 Authentication and Account Flow
+
 - Register with `name + contact (email or phone) + password`
 - Contact verification with 6-digit code
 - Resend verification code
@@ -27,6 +29,7 @@ This repository demonstrates not just "a working to-do list", but a complete eng
 - Logout endpoint (`/api/auth/logout`)
 
 ### 2.2 Task Management
+
 - Create task
 - Edit task (title/category/priority/deadline/completed)
 - Delete task
@@ -42,6 +45,7 @@ This repository demonstrates not just "a working to-do list", but a complete eng
   - priority
 
 ### 2.3 Advanced UX Features
+
 - Drag-and-drop manual ordering with per-user persistence in `localStorage`
 - Bulk operations:
   - select visible
@@ -55,6 +59,7 @@ This repository demonstrates not just "a working to-do list", but a complete eng
   - visible / selected statistics
 
 ### 2.4 Security
+
 - Helmet headers enabled (`contentSecurityPolicy` in production)
 - CORS middleware with production allow-list (`CORS_ALLOWED_ORIGINS`)
 - Auth route rate limiting
@@ -64,6 +69,7 @@ This repository demonstrates not just "a working to-do list", but a complete eng
 - Structured API errors (`code`, `message`, `details`)
 
 ### 2.5 Quality and Reliability
+
 - Unit tests for `auth.service` and `tasks.service`
 - Integration tests for auth/task APIs
 - Linting via ESLint
@@ -79,6 +85,7 @@ This repository demonstrates not just "a working to-do list", but a complete eng
 ## 3. Tech Stack
 
 ### Backend
+
 - `Node.js`
 - `Express`
 - `better-sqlite3`
@@ -90,11 +97,13 @@ This repository demonstrates not just "a working to-do list", but a complete eng
 - `dotenv`
 
 ### Frontend
+
 - Vanilla HTML/CSS/JS (no framework)
 - Component mount via static HTML fragments
 - Browser `fetch` API + local state
 
 ### Tooling / Dev Experience
+
 - `ESLint`
 - `Prettier`
 - `nodemon`
@@ -106,6 +115,7 @@ This repository demonstrates not just "a working to-do list", but a complete eng
 ## 4. Architecture (Layered)
 
 ### 4.1 Request Flow
+
 1. `routes` define HTTP endpoints and middleware chain
 2. `controllers` map HTTP requests to business operations
 3. `services` implement business rules and orchestration
@@ -162,6 +172,7 @@ tests/
 ```
 
 ### 4.3 Why this architecture matters
+
 - easier testing (service/repository boundaries)
 - easier refactor (controllers stay thin)
 - explicit domain vocabulary (constants + DTO)
@@ -175,6 +186,7 @@ tests/
 SQLite DB is created automatically in `data/todo.db`.
 
 ### users
+
 - `id`
 - `name`
 - `contactType`
@@ -187,6 +199,7 @@ SQLite DB is created automatically in `data/todo.db`.
 - `createdAt`
 
 ### sessions
+
 - `id`
 - `userId`
 - `tokenHash` (unique)
@@ -194,6 +207,7 @@ SQLite DB is created automatically in `data/todo.db`.
 - `createdAt`
 
 ### tasks
+
 - `id`
 - `userId`
 - `title`
@@ -234,9 +248,7 @@ All API errors follow this shape:
 {
   "code": "VALIDATION_ERROR",
   "message": "Task payload is invalid.",
-  "details": [
-    { "field": "title", "issue": "required" }
-  ]
+  "details": [{ "field": "title", "issue": "required" }]
 }
 ```
 
@@ -245,16 +257,19 @@ All API errors follow this shape:
 ## 7. Security Controls (Implemented)
 
 ### 7.1 CORS
+
 - In development, request origin is reflected for convenience
 - In production, origin must exist in `CORS_ALLOWED_ORIGINS`
 
 ### 7.2 Auth Rate Limit
+
 - Applied to auth-sensitive endpoints
 - Tunable via:
   - `AUTH_RATE_LIMIT_WINDOW_MS`
   - `AUTH_RATE_LIMIT_MAX`
 
 ### 7.3 Brute-Force Login Protection
+
 - Failed login attempts are tracked per contact hash
 - Temporary block after threshold
 - Configurable via:
@@ -264,6 +279,7 @@ All API errors follow this shape:
   - `LOGIN_FAILURE_DELAY_MS`
 
 ### 7.4 Session Security
+
 - HTTP-only cookie
 - `sameSite=lax`
 - `secure` in production
@@ -274,19 +290,23 @@ All API errors follow this shape:
 ## 8. Testing Strategy
 
 ### 8.1 Unit Tests
+
 - `tests/auth.service.test.js`
 - `tests/tasks.service.test.js`
 
 Coverage examples:
+
 - validation failures
 - duplicate contacts
 - blocked login state
 - CRUD task edge cases
 
 ### 8.2 Integration Tests
+
 - `tests/api.integration.test.js`
 
 Checks end-to-end flows:
+
 - register -> verify -> create task -> list tasks
 - unauthorized access behavior
 - invalid credentials
@@ -295,6 +315,7 @@ Checks end-to-end flows:
 - auth rate limiting
 
 ### 8.3 Isolated Test Environment
+
 `tests/helpers/test-env.js` dynamically configures per-suite temp DB and resets module cache to avoid cross-test state leakage.
 
 ---
@@ -304,6 +325,7 @@ Checks end-to-end flows:
 Workflow: `.github/workflows/ci.yml`
 
 Runs on push to `main` and on every pull request:
+
 1. `npm ci`
 2. `npm run lint`
 3. `npm run format:check`
@@ -346,6 +368,7 @@ npm start
 ```
 
 Open:
+
 - `http://127.0.0.1:3000`
 
 ### 10.4 Quality checks
@@ -384,11 +407,13 @@ From `.env.example`:
 Use this exact script to demonstrate all major capabilities in one session.
 
 ### Step A. Launch and prepare
+
 1. Start server (`npm run dev`)
 2. Open app in browser
 3. Open devtools network tab for API visibility
 
 ### Step B. Authentication
+
 1. Register with email
 2. Capture verification code (development preview)
 3. Verify contact
@@ -396,12 +421,14 @@ Use this exact script to demonstrate all major capabilities in one session.
 5. Logout and login again
 
 ### Step C. Task CRUD
+
 1. Add 5-10 tasks with different priorities/categories/deadlines
 2. Edit 2 tasks
 3. Toggle completion on several tasks
 4. Delete one task
 
 ### Step D. UX and productivity features
+
 1. Search by title and category
 2. Filter active/completed/all
 3. Sort by newest/oldest/deadline/priority
@@ -412,12 +439,14 @@ Use this exact script to demonstrate all major capabilities in one session.
 8. Clear completed
 
 ### Step E. Security demonstration
+
 1. Try `GET /api/tasks` without session -> expect `AUTH_REQUIRED`
 2. Trigger repeated invalid auth requests -> expect `RATE_LIMITED`
 3. Trigger repeated wrong logins for same contact -> expect `LOGIN_BLOCKED`
 4. Request unknown API route -> expect `NOT_FOUND` format
 
 ### Step F. Engineering quality
+
 1. Run `npm run lint`
 2. Run `npm run format:check`
 3. Run `npm test`
@@ -428,19 +457,23 @@ Use this exact script to demonstrate all major capabilities in one session.
 ## 13. Methodical Deep-Dive: What Is Used and Why
 
 ### 13.1 Backend core
+
 - Express app (`server/app.js`) composes all middlewares and routes.
 - Database bootstraps on startup (`server/db/database.js`) and creates tables/indexes idempotently.
 
 ### 13.2 Domain constants
+
 - `server/constants/*` removes magic strings and centralizes allowed values.
 - This reduces drift between validation, service logic, and persistence.
 
 ### 13.3 Validation and error design
+
 - `server/utils/validators.js` normalizes and validates all input contracts.
 - `server/utils/errors.js` guarantees one error shape across application.
 - Benefit: frontend can rely on stable error parsing logic.
 
 ### 13.4 Security mechanics
+
 - Contacts are encrypted at rest (`encryptedContact`) and also hashed (`contactHash`) for lookup uniqueness.
 - Passwords are stored as bcrypt hashes.
 - Session token itself is random; DB stores only hashed token.
@@ -449,24 +482,28 @@ Use this exact script to demonstrate all major capabilities in one session.
   - credential-level login block strategy
 
 ### 13.5 Service orchestration
+
 - Services own business logic and cross-cutting policies.
 - Repositories own SQL only.
 - Controllers own HTTP translation only.
 - DTOs own outbound response shape.
 
 ### 13.6 Frontend architecture
+
 - No framework dependency: easier portability and transparent logic.
 - State is in `window.appState` + module state in task manager.
 - Components are mounted dynamically from HTML fragments.
 - UX layer includes bulk operations, drag sort, progressive rendering, and live summaries.
 
 ### 13.7 Test engineering
+
 - Unit tests validate service correctness in isolation.
 - Integration tests validate actual HTTP contract and middleware chain.
 - Test helper ensures isolated temp DB and fresh module graph.
 - This prevents hidden state and flaky behavior.
 
 ### 13.8 CI/CD quality gate
+
 - CI enforces style + behavior before merge/deploy.
 - Any lint failure, formatting drift, or regression test fails pipeline.
 - This is foundational for team-scale maintainability.
@@ -476,6 +513,7 @@ Use this exact script to demonstrate all major capabilities in one session.
 ## 14. What This Project Demonstrates (Portfolio Value)
 
 This project demonstrates practical capability in:
+
 - full-stack JavaScript engineering
 - API and session auth design
 - secure data handling
@@ -496,4 +534,3 @@ If presented in interview/assessment, this is not a toy app: it is a complete mi
 - Add docker-compose for one-command environment setup
 - Add observability (request IDs, audit logs, metrics)
 - Add refresh-token strategy and session revocation dashboard
-

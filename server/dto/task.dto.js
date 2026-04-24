@@ -1,7 +1,9 @@
 function toTaskDto(task) {
   return {
     ...task,
-    completed: Boolean(task.completed)
+    completed: Boolean(task.completed),
+    notes: task.notes || "",
+    deletedAt: task.deletedAt || null
   };
 }
 

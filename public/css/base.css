@@ -82,12 +82,14 @@ p {
 
 input,
 select,
+textarea,
 button {
   font: inherit;
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   padding: 14px 16px;
   border: 1px solid rgba(73, 53, 34, 0.08);
@@ -103,9 +105,15 @@ select {
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   border-color: rgba(201, 108, 58, 0.55);
   box-shadow: 0 0 0 4px rgba(201, 108, 58, 0.12);
+}
+
+textarea {
+  resize: vertical;
+  line-height: 1.5;
 }
 
 button {

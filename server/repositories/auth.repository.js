@@ -60,6 +60,8 @@ function findSessionUserByTokenHash(tokenHash, currentTimestamp) {
       .prepare(
         `
       SELECT sessions.userId, users.*
+      , sessions.expiresAt AS sessionExpiresAt
+      , sessions.createdAt AS sessionCreatedAt
       FROM sessions
       JOIN users ON users.id = sessions.userId
       WHERE sessions.tokenHash = ? AND sessions.expiresAt > ?
@@ -71,6 +73,10 @@ function findSessionUserByTokenHash(tokenHash, currentTimestamp) {
 
 function deleteSessionsByUserId(userId) {
   db.prepare("DELETE FROM sessions WHERE userId = ?").run(userId);
+}
+
+function countSessionsByUserId(userId) {
+  return db.prepare("SELECT COUNT(*) AS count FROM sessions WHERE userId = ?").get(userId).count;
 }
 
 function createSession(session) {
@@ -96,6 +102,7 @@ module.exports = {
   deleteExpiredSessions,
   findSessionUserByTokenHash,
   deleteSessionsByUserId,
+  countSessionsByUserId,
   createSession,
   deleteSessionByTokenHash
 };

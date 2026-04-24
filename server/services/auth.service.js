@@ -262,6 +262,28 @@ function destroySession(request, response) {
   });
 }
 
+function destroyAllSessions(request, response) {
+  const sessionUser = getSessionUser(request);
+
+  if (sessionUser) {
+    authRepository.deleteSessionsByUserId(sessionUser.id);
+  }
+
+  response.clearCookie(env.COOKIE_NAME, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: env.NODE_ENV === "production"
+  });
+}
+
+function getSessionSummary(user) {
+  return {
+    activeSessions: authRepository.countSessionsByUserId(user.id),
+    currentSessionCreatedAt: user.sessionCreatedAt || null,
+    currentSessionExpiresAt: user.sessionExpiresAt || null
+  };
+}
+
 function serializeUser(user) {
   return toUserDto(user, decryptValue, maskContact);
 }
@@ -328,6 +350,8 @@ module.exports = {
   getSessionUser,
   createSession,
   destroySession,
+  destroyAllSessions,
+  getSessionSummary,
   serializeUser,
   __resetLoginSecurityStateForTests
 };

@@ -11,6 +11,11 @@ function listTasks(userId) {
   return toTaskListDto(tasks);
 }
 
+function listDeletedTasks(userId) {
+  const tasks = tasksRepository.listDeletedTasksByUserId(userId);
+  return toTaskListDto(tasks);
+}
+
 function createTask(userId, payload) {
   const validationDetails = validateTaskPayload(payload, false);
 
@@ -24,9 +29,11 @@ function createTask(userId, payload) {
     userId,
     title: normalizedPayload.title,
     category: normalizedPayload.category,
+    notes: normalizedPayload.notes || "",
     priority: normalizedPayload.priority || TASK_PRIORITY.MEDIUM,
     deadline: normalizedPayload.deadline,
     completed: false,
+    deletedAt: null,
     createdAt: Date.now()
   };
 
@@ -54,12 +61,14 @@ function updateTask(userId, taskId, payload) {
     userId: existingTask.userId,
     title: normalizedPayload.title || existingTask.title,
     category: normalizedPayload.category ?? existingTask.category,
+    notes: normalizedPayload.notes ?? existingTask.notes,
     priority: normalizedPayload.priority || existingTask.priority,
     deadline: normalizedPayload.deadline ?? existingTask.deadline,
     completed:
       typeof normalizedPayload.completed === "boolean"
         ? normalizedPayload.completed
         : Boolean(existingTask.completed),
+    deletedAt: existingTask.deletedAt,
     createdAt: existingTask.createdAt
   };
 
@@ -81,6 +90,27 @@ function deleteTask(userId, taskId) {
   return { status: 204 };
 }
 
+function restoreTask(userId, taskId) {
+  const result = tasksRepository.restoreTaskByIdAndUserId(taskId, userId);
+
+  if (result.changes === 0) {
+    return createErrorResult(404, "TASK_NOT_FOUND", "Deleted task not found.");
+  }
+
+  const restoredTask = tasksRepository.findTaskByIdAndUserId(taskId, userId);
+  return { status: 200, body: toTaskListDto([restoredTask])[0] };
+}
+
+function permanentlyDeleteTask(userId, taskId) {
+  const result = tasksRepository.permanentlyDeleteTaskByIdAndUserId(taskId, userId);
+
+  if (result.changes === 0) {
+    return createErrorResult(404, "TASK_NOT_FOUND", "Deleted task not found.");
+  }
+
+  return { status: 204 };
+}
+
 function clearCompletedTasks(userId, shouldDeleteCompleted) {
   if (!shouldDeleteCompleted) {
     return createValidationError(
@@ -97,10 +127,94 @@ function clearCompletedTasks(userId, shouldDeleteCompleted) {
   };
 }
 
+function clearTrash(userId) {
+  const result = tasksRepository.clearTrashByUserId(userId);
+  return {
+    status: 200,
+    body: { deletedCount: result.changes }
+  };
+}
+
+function bulkUpdateTasks(userId, payload = {}) {
+  const ids = Array.isArray(payload.ids) ? payload.ids.filter((id) => typeof id === "string") : [];
+
+  if (ids.length === 0) {
+    return createValidationError([{ field: "ids", issue: "at least one id is required" }]);
+  }
+
+  const validationDetails = validateTaskPayload(payload.changes || {}, true);
+
+  if (validationDetails.length > 0) {
+    return createValidationError(validationDetails, "Bulk task payload is invalid.");
+  }
+
+  const updated = [];
+  ids.forEach((taskId) => {
+    const result = updateTask(userId, taskId, payload.changes || {});
+    if (result.status === 200) {
+      updated.push(result.body);
+    }
+  });
+
+  return {
+    status: 200,
+    body: { updatedCount: updated.length, tasks: updated }
+  };
+}
+
+function exportTasks(userId) {
+  return {
+    status: 200,
+    body: {
+      exportedAt: new Date().toISOString(),
+      tasks: listTasks(userId)
+    }
+  };
+}
+
+function importTasks(userId, payload = {}) {
+  const tasks = Array.isArray(payload.tasks) ? payload.tasks : [];
+
+  if (tasks.length === 0) {
+    return createValidationError([{ field: "tasks", issue: "at least one task is required" }]);
+  }
+
+  const imported = [];
+  const errors = [];
+
+  tasks.slice(0, 250).forEach((task, index) => {
+    const result = createTask(userId, {
+      title: task.title,
+      category: task.category || "",
+      notes: task.notes || "",
+      priority: task.priority || TASK_PRIORITY.MEDIUM,
+      deadline: task.deadline || ""
+    });
+
+    if (result.status === 201) {
+      imported.push(result.body);
+    } else {
+      errors.push({ index, details: result.body.details || result.body.message });
+    }
+  });
+
+  return {
+    status: errors.length > 0 ? 207 : 201,
+    body: { importedCount: imported.length, tasks: imported, errors }
+  };
+}
+
 module.exports = {
   listTasks,
+  listDeletedTasks,
   createTask,
   updateTask,
   deleteTask,
-  clearCompletedTasks
+  restoreTask,
+  permanentlyDeleteTask,
+  clearCompletedTasks,
+  clearTrash,
+  bulkUpdateTasks,
+  exportTasks,
+  importTasks
 };

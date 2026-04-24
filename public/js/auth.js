@@ -2,6 +2,8 @@ const AUTH_API = "/api/auth";
 
 window.appState = window.appState || {
   tasks: [],
+  trash: [],
+  security: null,
   currentUser: null
 };
 
@@ -88,6 +90,7 @@ async function initializeAuth() {
 
     if (session.authenticated) {
       window.appState.currentUser = session.user;
+      window.appState.security = session.security || null;
       updateAuthView();
 
       if (typeof window.loadTasks === "function") {
@@ -97,6 +100,7 @@ async function initializeAuth() {
       hideBanner(authStatusBanner);
     } else {
       window.appState.currentUser = null;
+      window.appState.security = null;
       updateAuthView();
       hideBanner(authStatusBanner);
     }
@@ -148,6 +152,7 @@ async function initializeAuth() {
       });
 
       window.appState.currentUser = result.user;
+      window.appState.security = null;
       updateAuthView();
       closeAuthModal();
 
@@ -177,6 +182,7 @@ async function initializeAuth() {
       });
 
       window.appState.currentUser = result.user;
+      window.appState.security = null;
       updateAuthView();
       closeAuthModal();
 
@@ -218,6 +224,8 @@ async function initializeAuth() {
       await request(`${AUTH_API}/logout`, { method: "POST" });
       window.appState.currentUser = null;
       window.appState.tasks = [];
+      window.appState.trash = [];
+      window.appState.security = null;
       updateAuthView();
 
       if (typeof window.renderTasks === "function") {
@@ -262,10 +270,9 @@ async function initializeAuth() {
 
   function handleAuthButtonClick() {
     if (window.appState.currentUser) {
-      const shouldLogout = window.confirm("Вы уже вошли в аккаунт. Выйти из него?");
-
-      if (shouldLogout) {
-        handleLogout();
+      const securityButton = document.querySelector('[data-view="settings"]');
+      if (securityButton) {
+        securityButton.click();
       }
       return;
     }
