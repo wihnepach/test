@@ -57,8 +57,17 @@ test("login is blocked until contact verification is completed", async () => {
     password: "password123"
   });
   assert.equal(loginAfterVerify.status, 200);
-  assert.equal(loginAfterVerify.body.user.isVerified, true);
-  assert.match(loginAfterVerify.body.user.contactMasked, /@example\.com$/);
+  assert.equal(loginAfterVerify.body.requiresLoginCode, true);
+  assert.ok(loginAfterVerify.body.verificationPreview);
+
+  const loginCodeResult = authService.verifyLoginCode({
+    contactType: "email",
+    contact: "alex@example.com",
+    code: loginAfterVerify.body.verificationPreview
+  });
+  assert.equal(loginCodeResult.status, 200);
+  assert.equal(loginCodeResult.body.user.isVerified, true);
+  assert.match(loginCodeResult.body.user.contactMasked, /@example\.com$/);
 });
 
 test("registerUser rejects duplicate contact", async () => {

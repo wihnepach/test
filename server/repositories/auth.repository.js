@@ -46,6 +46,38 @@ function updateVerificationCode(userId, verificationCodeHash, verificationExpire
   ).run(verificationCodeHash, verificationExpiresAt, userId);
 }
 
+function updateLoginCode(userId, loginCodeHash, loginCodeExpiresAt) {
+  db.prepare(
+    `
+    UPDATE users
+    SET loginCodeHash = ?,
+        loginCodeExpiresAt = ?
+    WHERE id = ?
+    `
+  ).run(loginCodeHash, loginCodeExpiresAt, userId);
+}
+
+function updateEncryptedContact(userId, encryptedContact) {
+  db.prepare(
+    `
+    UPDATE users
+    SET encryptedContact = ?
+    WHERE id = ?
+    `
+  ).run(encryptedContact, userId);
+}
+
+function clearLoginCode(userId) {
+  db.prepare(
+    `
+    UPDATE users
+    SET loginCodeHash = NULL,
+        loginCodeExpiresAt = NULL
+    WHERE id = ?
+    `
+  ).run(userId);
+}
+
 function findUserById(userId) {
   return db.prepare("SELECT * FROM users WHERE id = ?").get(userId);
 }
@@ -98,6 +130,9 @@ module.exports = {
   createUser,
   verifyUserById,
   updateVerificationCode,
+  updateLoginCode,
+  updateEncryptedContact,
+  clearLoginCode,
   findUserById,
   deleteExpiredSessions,
   findSessionUserByTokenHash,

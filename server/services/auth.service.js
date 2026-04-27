@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require("uuid");
 
 const env = require("../../config/env");
 const authRepository = require("../repositories/auth.repository");
+const emailService = require("./email.service");
 const {
   hashValue,
   encryptValue,
@@ -54,6 +55,16 @@ async function registerUser(payload) {
   }
 
   const verificationCode = generateVerificationCode();
+  const deliveryResult = await emailService.sendVerificationCode(
+    normalizedPayload.contactType,
+    normalizedPayload.contact,
+    verificationCode
+  );
+
+  if (deliveryResult.status) {
+    return deliveryResult;
+  }
+
   const user = {
     id: uuidv4(),
     name: normalizedPayload.name,
@@ -74,7 +85,7 @@ async function registerUser(payload) {
     body: toRegisterResponse(
       normalizedPayload.contactType,
       normalizedPayload.contact,
-      env.NODE_ENV === "development" ? verificationCode : undefined
+      getVerificationPreview(verificationCode, deliveryResult)
     )
   };
 }
@@ -109,6 +120,7 @@ function verifyUser(payload) {
   }
 
   authRepository.verifyUserById(user.id);
+  ensureContactCanBeDecrypted(user.id, normalizedPayload.contact);
 
   const sessionUser = authRepository.findUserById(user.id);
 
@@ -119,7 +131,7 @@ function verifyUser(payload) {
   };
 }
 
-function resendVerificationCode(payload) {
+async function resendVerificationCode(payload) {
   const validationDetails = validateVerificationPayload({
     ...payload,
     code: "000000"
@@ -144,6 +156,15 @@ function resendVerificationCode(payload) {
   }
 
   const verificationCode = generateVerificationCode();
+  const deliveryResult = await emailService.sendVerificationCode(
+    user.contactType,
+    normalizedPayload.contact,
+    verificationCode
+  );
+
+  if (deliveryResult.status) {
+    return deliveryResult;
+  }
 
   authRepository.updateVerificationCode(
     user.id,
@@ -154,8 +175,8 @@ function resendVerificationCode(payload) {
   return {
     status: 200,
     body: {
-      message: "New verification code generated.",
-      verificationPreview: env.NODE_ENV === "development" ? verificationCode : undefined
+      message: "Новый код подтверждения отправлен.",
+      verificationPreview: getVerificationPreview(verificationCode, deliveryResult)
     }
   };
 }
@@ -207,10 +228,78 @@ async function loginUser(payload) {
 
   clearLoginAttemptState(contactHash);
 
+  if (normalizedPayload.contactType === "email") {
+    const loginCode = generateVerificationCode();
+    const deliveryResult = await emailService.sendVerificationCode(
+      normalizedPayload.contactType,
+      normalizedPayload.contact,
+      loginCode,
+      "login"
+    );
+
+    if (deliveryResult.status) {
+      return deliveryResult;
+    }
+
+    authRepository.updateLoginCode(
+      user.id,
+      hashValue(loginCode),
+      Date.now() + env.VERIFICATION_CODE_TTL_MINUTES * 60 * 1000
+    );
+
+    return {
+      status: 200,
+      body: {
+        message: "Код входа отправлен на email.",
+        requiresLoginCode: true,
+        pendingContact: normalizedPayload.contact,
+        contactType: normalizedPayload.contactType,
+        verificationPreview: getVerificationPreview(loginCode, deliveryResult)
+      }
+    };
+  }
+
   return {
     status: 200,
     body: toLoginSuccessResponse(serializeUser(user)),
     userId: user.id
+  };
+}
+
+function verifyLoginCode(payload) {
+  const validationDetails = validateVerificationPayload(payload);
+
+  if (validationDetails.length > 0) {
+    return createValidationError(validationDetails, "Login verification payload is invalid.");
+  }
+
+  const normalizedPayload = normalizeVerificationPayload(payload);
+  const contactHash = hashValue(
+    buildContactKey(normalizedPayload.contactType, normalizedPayload.contact)
+  );
+  const user = authRepository.findUserByContactHash(contactHash);
+
+  if (!user || !user.isVerified) {
+    return createErrorResult(404, "USER_NOT_FOUND", "Verified user not found.");
+  }
+
+  if (!user.loginCodeHash || Date.now() > user.loginCodeExpiresAt) {
+    return createErrorResult(400, "LOGIN_CODE_EXPIRED", "Login code expired.");
+  }
+
+  if (hashValue(normalizedPayload.code) !== user.loginCodeHash) {
+    return createErrorResult(400, "INVALID_LOGIN_CODE", "Invalid login code.");
+  }
+
+  authRepository.clearLoginCode(user.id);
+  ensureContactCanBeDecrypted(user.id, normalizedPayload.contact);
+
+  const sessionUser = authRepository.findUserById(user.id);
+
+  return {
+    status: 200,
+    body: toLoginSuccessResponse(serializeUser(sessionUser)),
+    userId: sessionUser.id
   };
 }
 
@@ -288,6 +377,20 @@ function serializeUser(user) {
   return toUserDto(user, decryptValue, maskContact);
 }
 
+function ensureContactCanBeDecrypted(userId, contact) {
+  const user = authRepository.findUserById(userId);
+
+  if (!user) {
+    return;
+  }
+
+  try {
+    decryptValue(user.encryptedContact);
+  } catch {
+    authRepository.updateEncryptedContact(userId, encryptValue(contact));
+  }
+}
+
 function getBlockedLoginState(contactHash) {
   const now = Date.now();
   const state = loginSecurityState.get(contactHash);
@@ -340,6 +443,15 @@ function delayFailureResponse() {
 
 function __resetLoginSecurityStateForTests() {
   loginSecurityState.clear();
+  emailService.__resetEmailTransportForTests();
+}
+
+function getVerificationPreview(verificationCode, deliveryResult) {
+  if (!env.VERIFICATION_CODE_PREVIEW) {
+    return undefined;
+  }
+
+  return deliveryResult.sent ? undefined : verificationCode;
 }
 
 module.exports = {
@@ -347,6 +459,7 @@ module.exports = {
   verifyUser,
   resendVerificationCode,
   loginUser,
+  verifyLoginCode,
   getSessionUser,
   createSession,
   destroySession,

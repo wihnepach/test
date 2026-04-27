@@ -16,12 +16,22 @@ async function verify(request, response) {
 }
 
 async function resendVerification(request, response) {
-  const result = authService.resendVerificationCode(request.body);
+  const result = await authService.resendVerificationCode(request.body);
   response.status(result.status).json(result.body);
 }
 
 async function login(request, response) {
   const result = await authService.loginUser(request.body);
+
+  if (result.userId) {
+    authService.createSession(response, result.userId);
+  }
+
+  response.status(result.status).json(result.body);
+}
+
+async function verifyLogin(request, response) {
+  const result = authService.verifyLoginCode(request.body);
 
   if (result.userId) {
     authService.createSession(response, result.userId);
@@ -60,6 +70,7 @@ module.exports = {
   verify,
   resendVerification,
   login,
+  verifyLogin,
   session,
   logout,
   logoutAll

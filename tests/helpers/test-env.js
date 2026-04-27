@@ -21,6 +21,7 @@ const MODULES_TO_CLEAR = [
   "server/constants/task.constants.js",
   "server/routes/auth.routes.js",
   "server/routes/tasks.routes.js",
+  "server/services/email.service.js",
   "server/services/auth.service.js",
   "server/services/tasks.service.js",
   "server/utils/async-handler.js",
@@ -49,6 +50,14 @@ function initTestEnvironment(suiteName) {
   process.env.LOGIN_MAX_ATTEMPTS = "3";
   process.env.LOGIN_BLOCK_MS = "60000";
   process.env.LOGIN_FAILURE_DELAY_MS = "1";
+  process.env.EMAIL_REQUIRE_DELIVERY = "false";
+  process.env.VERIFICATION_CODE_PREVIEW = "true";
+  process.env.SMTP_HOST = "";
+  process.env.SMTP_PORT = "587";
+  process.env.SMTP_SECURE = "false";
+  process.env.SMTP_USER = "";
+  process.env.SMTP_PASS = "";
+  process.env.EMAIL_FROM = "TaskFlow <tests@example.com>";
 
   purgeModuleCache();
 

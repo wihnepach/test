@@ -25,6 +25,8 @@ router.post(
 
 router.post("/login", authRateLimiter, asyncHandler(authController.login));
 
+router.post("/login/verify", authRateLimiter, asyncHandler(authController.verifyLogin));
+
 router.get("/session", asyncHandler(authController.session));
 
 router.post("/logout", asyncHandler(authController.logout));

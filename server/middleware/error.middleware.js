@@ -8,6 +8,10 @@ function notFoundHandler(request, response) {
 }
 
 function errorHandler(error, request, response, _next) {
+  if (process.env.NODE_ENV !== "test") {
+    console.error(error);
+  }
+
   const payload = toHttpErrorPayload(error);
   response.status(payload.status).json(payload.body);
 }

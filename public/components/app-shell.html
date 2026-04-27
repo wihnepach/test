@@ -2,33 +2,34 @@
   <header class="topbar">
     <div class="brand-block">
       <p class="eyebrow eyebrow--small">TaskFlow</p>
-      <strong class="brand-title">Plan. Execute. Deliver.</strong>
+      <strong class="brand-title">Планируйте. Делайте. Завершайте.</strong>
     </div>
     <button class="primary-button topbar__auth-button" id="openAuthModalBtn" type="button">
-      Sign in
+      Войти
     </button>
   </header>
 
   <section class="hero">
     <div class="hero__content">
-      <p class="eyebrow">Personal task planner</p>
-      <h1>Everything important in one calm workspace</h1>
+      <p class="eyebrow">Личный планировщик задач</p>
+      <h1>Все важные дела в одном спокойном рабочем пространстве</h1>
       <p class="hero__text">
-        Capture tasks, track progress, review deadlines, and recover work when plans change.
+        Добавляйте задачи, следите за прогрессом, контролируйте дедлайны и восстанавливайте
+        удаленные дела, когда планы меняются.
       </p>
     </div>
 
-    <div class="stats" aria-label="Task statistics">
+    <div class="stats" aria-label="Статистика задач">
       <article class="stat-card">
-        <span class="stat-card__label">Total</span>
+        <span class="stat-card__label">Всего</span>
         <strong class="stat-card__value" id="totalCount">0</strong>
       </article>
       <article class="stat-card">
-        <span class="stat-card__label">Done</span>
+        <span class="stat-card__label">Готово</span>
         <strong class="stat-card__value" id="completedCount">0</strong>
       </article>
       <article class="stat-card">
-        <span class="stat-card__label">Active</span>
+        <span class="stat-card__label">Активные</span>
         <strong class="stat-card__value" id="activeCount">0</strong>
       </article>
     </div>
@@ -37,29 +38,27 @@
   <section class="panel account-panel" id="accountPanel" hidden>
     <div class="account-card">
       <div>
-        <p class="eyebrow eyebrow--small">Account</p>
-        <h2 id="accountTitle">Welcome</h2>
+        <p class="eyebrow eyebrow--small">Аккаунт</p>
+        <h2 id="accountTitle">Добро пожаловать</h2>
         <p class="account-card__text" id="accountSubtitle">
-          You are signed in and can manage your tasks.
+          Вы вошли в аккаунт и можете управлять задачами.
         </p>
       </div>
       <div class="account-card__actions">
-        <button class="secondary-button" id="openSecurityBtn" type="button">Security</button>
-        <button class="secondary-button" id="logoutBtn" type="button">Sign out</button>
+        <button class="secondary-button" id="openSecurityBtn" type="button">Безопасность</button>
+        <button class="secondary-button" id="logoutBtn" type="button">Выйти</button>
       </div>
     </div>
   </section>
 
   <section class="panel workspace" id="todoPanel" hidden>
-    <nav class="workspace-tabs" aria-label="Workspace views">
-      <button class="tab-pill tab-pill--active" data-view="dashboard" type="button">
-        Dashboard
-      </button>
-      <button class="tab-pill" data-view="tasks" type="button">Tasks</button>
-      <button class="tab-pill" data-view="timeline" type="button">Timeline</button>
-      <button class="tab-pill" data-view="trash" type="button">Trash</button>
-      <button class="tab-pill" data-view="stats" type="button">Stats</button>
-      <button class="tab-pill" data-view="settings" type="button">Settings</button>
+    <nav class="workspace-tabs" aria-label="Разделы рабочего пространства">
+      <button class="tab-pill tab-pill--active" data-view="dashboard" type="button">Обзор</button>
+      <button class="tab-pill" data-view="tasks" type="button">Задачи</button>
+      <button class="tab-pill" data-view="timeline" type="button">Сроки</button>
+      <button class="tab-pill" data-view="trash" type="button">Корзина</button>
+      <button class="tab-pill" data-view="stats" type="button">Статистика</button>
+      <button class="tab-pill" data-view="settings" type="button">Настройки</button>
     </nav>
 
     <div class="status-banner" id="taskStatusBanner" hidden></div>
@@ -67,10 +66,10 @@
     <section class="workspace-view workspace-view--active" data-view-panel="dashboard">
       <div class="view-header">
         <div>
-          <p class="eyebrow eyebrow--small">Overview</p>
-          <h2>Dashboard</h2>
+          <p class="eyebrow eyebrow--small">Сводка</p>
+          <h2>Обзор</h2>
         </div>
-        <button class="primary-button" id="quickAddBtn" type="button">Quick add</button>
+        <button class="primary-button" id="quickAddBtn" type="button">Быстро добавить</button>
       </div>
       <div class="dashboard-grid" id="dashboardGrid"></div>
     </section>
@@ -78,107 +77,109 @@
     <section class="workspace-view" data-view-panel="tasks">
       <form class="task-form" id="taskForm">
         <div class="field field--wide">
-          <label for="taskInput">New task</label>
+          <label for="taskInput">Новая задача</label>
           <input
             id="taskInput"
             name="taskInput"
             type="text"
             maxlength="160"
-            placeholder="For example: Prepare weekly report"
+            placeholder="Например: подготовить еженедельный отчет"
             required
           />
         </div>
 
         <div class="field">
-          <label for="categoryInput">Category</label>
+          <label for="categoryInput">Категория</label>
           <input
             id="categoryInput"
             name="categoryInput"
             type="text"
             maxlength="80"
-            placeholder="Work / Home / Study"
+            placeholder="Работа / Дом / Учеба"
           />
         </div>
 
         <div class="field">
-          <label for="priorityInput">Priority</label>
+          <label for="priorityInput">Приоритет</label>
           <select id="priorityInput" name="priorityInput">
-            <option value="low">Low</option>
-            <option value="medium" selected>Medium</option>
-            <option value="high">High</option>
+            <option value="low">Низкий</option>
+            <option value="medium" selected>Средний</option>
+            <option value="high">Высокий</option>
           </select>
         </div>
 
         <div class="field">
-          <label for="deadlineInput">Deadline</label>
+          <label for="deadlineInput">Дедлайн</label>
           <input id="deadlineInput" name="deadlineInput" type="datetime-local" />
         </div>
 
-        <button class="primary-button" type="submit">Add task</button>
+        <button class="primary-button" type="submit">Добавить задачу</button>
       </form>
 
       <div class="toolbar">
         <div class="toolbar__group">
-          <label class="sr-only" for="searchInput">Search tasks</label>
-          <input id="searchInput" type="search" placeholder="Search tasks" />
+          <label class="sr-only" for="searchInput">Поиск задач</label>
+          <input id="searchInput" type="search" placeholder="Поиск задач" />
         </div>
 
         <div class="toolbar__group">
-          <label class="sr-only" for="statusFilter">Filter by status</label>
+          <label class="sr-only" for="statusFilter">Фильтр по статусу</label>
           <select id="statusFilter">
-            <option value="all">All</option>
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
+            <option value="all">Все</option>
+            <option value="active">Активные</option>
+            <option value="completed">Завершенные</option>
           </select>
         </div>
 
         <div class="toolbar__group">
-          <label class="sr-only" for="sortSelect">Sorting</label>
+          <label class="sr-only" for="sortSelect">Сортировка</label>
           <select id="sortSelect">
-            <option value="manual">Manual order</option>
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-            <option value="deadline">By deadline</option>
-            <option value="priority">By priority</option>
+            <option value="manual">Ручной порядок</option>
+            <option value="newest">Сначала новые</option>
+            <option value="oldest">Сначала старые</option>
+            <option value="deadline">По дедлайну</option>
+            <option value="priority">По приоритету</option>
           </select>
         </div>
 
         <div class="toolbar__group toolbar__group--bulk">
           <button class="secondary-button" id="selectVisibleBtn" type="button">
-            Select visible
+            Выбрать видимые
           </button>
           <button class="secondary-button" id="markSelectedCompletedBtn" type="button">
-            Complete selected
+            Завершить выбранные
           </button>
-          <button class="secondary-button" id="bulkEditBtn" type="button">Bulk edit</button>
+          <button class="secondary-button" id="bulkEditBtn" type="button">
+            Массовое изменение
+          </button>
           <button class="secondary-button" id="exportSelectedBtn" type="button">
-            Export selected
+            Экспорт выбранных
           </button>
           <button class="secondary-button" id="deleteSelectedBtn" type="button">
-            Delete selected
+            Удалить выбранные
           </button>
           <button class="secondary-button" id="clearCompletedBtn" type="button">
-            Clear completed
+            Убрать завершенные
           </button>
         </div>
       </div>
 
       <section class="task-section" aria-live="polite">
         <div class="task-section__header">
-          <h2>Task list</h2>
-          <p id="taskSummary">No tasks yet</p>
+          <h2>Список задач</h2>
+          <p id="taskSummary">Задач пока нет</p>
         </div>
 
         <ul class="task-list" id="taskList"></ul>
 
         <div class="load-more" id="loadMoreWrap" hidden>
           <p id="loadMoreInfo"></p>
-          <button class="secondary-button" id="loadMoreBtn" type="button">Load more</button>
+          <button class="secondary-button" id="loadMoreBtn" type="button">Показать еще</button>
         </div>
 
         <div class="empty-state" id="emptyState">
-          <h3>Your list is empty</h3>
-          <p>Add your first task to get started.</p>
+          <h3>Список пуст</h3>
+          <p>Добавьте первую задачу, чтобы начать.</p>
         </div>
       </section>
     </section>
@@ -186,8 +187,8 @@
     <section class="workspace-view" data-view-panel="timeline">
       <div class="view-header">
         <div>
-          <p class="eyebrow eyebrow--small">Schedule</p>
-          <h2>Timeline</h2>
+          <p class="eyebrow eyebrow--small">Расписание</p>
+          <h2>Сроки</h2>
         </div>
       </div>
       <div class="timeline-list" id="timelineList"></div>
@@ -196,23 +197,23 @@
     <section class="workspace-view" data-view-panel="trash">
       <div class="view-header">
         <div>
-          <p class="eyebrow eyebrow--small">Recovery</p>
-          <h2>Trash</h2>
+          <p class="eyebrow eyebrow--small">Восстановление</p>
+          <h2>Корзина</h2>
         </div>
-        <button class="secondary-button" id="clearTrashBtn" type="button">Clear trash</button>
+        <button class="secondary-button" id="clearTrashBtn" type="button">Очистить корзину</button>
       </div>
       <ul class="task-list" id="trashList"></ul>
       <div class="empty-state" id="trashEmptyState">
-        <h3>Trash is empty</h3>
-        <p>Deleted tasks will appear here.</p>
+        <h3>Корзина пуста</h3>
+        <p>Удаленные задачи появятся здесь.</p>
       </div>
     </section>
 
     <section class="workspace-view" data-view-panel="stats">
       <div class="view-header">
         <div>
-          <p class="eyebrow eyebrow--small">Patterns</p>
-          <h2>Stats</h2>
+          <p class="eyebrow eyebrow--small">Аналитика</p>
+          <h2>Статистика</h2>
         </div>
       </div>
       <div class="analytics-grid" id="analyticsGrid"></div>
@@ -221,43 +222,43 @@
     <section class="workspace-view" data-view-panel="settings">
       <div class="view-header">
         <div>
-          <p class="eyebrow eyebrow--small">Preferences</p>
-          <h2>Settings & security</h2>
+          <p class="eyebrow eyebrow--small">Параметры</p>
+          <h2>Настройки и безопасность</h2>
         </div>
       </div>
       <div class="settings-grid">
         <article class="settings-card">
-          <h3>Appearance</h3>
+          <h3>Внешний вид</h3>
           <label class="switch-row">
-            <span>Compact task cards</span>
+            <span>Компактные карточки задач</span>
             <input id="compactModeInput" type="checkbox" />
           </label>
           <label class="switch-row">
-            <span>Show finished tasks in dashboard</span>
+            <span>Показывать завершенные в обзоре</span>
             <input id="dashboardDoneInput" type="checkbox" checked />
           </label>
         </article>
         <article class="settings-card">
-          <h3>Import and export</h3>
+          <h3>Импорт и экспорт</h3>
           <div class="settings-actions">
-            <button class="secondary-button" id="importTasksBtn" type="button">Import JSON</button>
-            <button class="secondary-button" id="exportAllBtn" type="button">Export all</button>
+            <button class="secondary-button" id="importTasksBtn" type="button">Импорт JSON</button>
+            <button class="secondary-button" id="exportAllBtn" type="button">Экспорт всего</button>
           </div>
         </article>
         <article class="settings-card">
-          <h3>Security</h3>
+          <h3>Безопасность</h3>
           <dl class="security-list">
             <div>
-              <dt>Active sessions</dt>
+              <dt>Активные сессии</dt>
               <dd id="activeSessionsValue">1</dd>
             </div>
             <div>
-              <dt>Current session expires</dt>
-              <dd id="sessionExpiresValue">Unknown</dd>
+              <dt>Текущая сессия истекает</dt>
+              <dd id="sessionExpiresValue">Неизвестно</dd>
             </div>
           </dl>
           <button class="secondary-button danger-button" id="logoutAllBtn" type="button">
-            Sign out everywhere
+            Выйти на всех устройствах
           </button>
         </article>
       </div>
@@ -270,7 +271,7 @@
 <template id="taskTemplate">
   <li class="task-item">
     <div class="task-item__main">
-      <button class="drag-handle" type="button" title="Drag">↕</button>
+      <button class="drag-handle" type="button" title="Перетащить">↕</button>
 
       <label class="checkbox checkbox--select">
         <input class="task-select" type="checkbox" />
@@ -299,10 +300,10 @@
     </div>
 
     <div class="task-item__actions">
-      <button class="icon-button details-button" type="button">Details</button>
-      <button class="icon-button duplicate-button" type="button">Duplicate</button>
-      <button class="icon-button snooze-button" type="button">Snooze</button>
-      <button class="icon-button delete-button" type="button">Delete</button>
+      <button class="icon-button details-button" type="button">Детали</button>
+      <button class="icon-button duplicate-button" type="button">Копия</button>
+      <button class="icon-button snooze-button" type="button">Завтра</button>
+      <button class="icon-button delete-button" type="button">Удалить</button>
     </div>
   </li>
 </template>
@@ -321,9 +322,9 @@
       </div>
     </div>
     <div class="task-item__actions">
-      <button class="icon-button restore-button" type="button">Restore</button>
+      <button class="icon-button restore-button" type="button">Восстановить</button>
       <button class="icon-button delete-button permanent-delete-button" type="button">
-        Delete forever
+        Удалить навсегда
       </button>
     </div>
   </li>
@@ -333,43 +334,43 @@
   <div class="modal__backdrop" data-close-modal></div>
   <form class="modal__dialog" id="taskModalForm">
     <div class="modal__header">
-      <h2 id="taskModalTitle">Task details</h2>
-      <button class="icon-button" type="button" data-close-modal>Close</button>
+      <h2 id="taskModalTitle">Детали задачи</h2>
+      <button class="icon-button" type="button" data-close-modal>Закрыть</button>
     </div>
     <div class="modal__body form-grid">
       <input id="taskModalId" type="hidden" />
       <div class="field field--wide">
-        <label for="taskModalTaskTitle">Title</label>
+        <label for="taskModalTaskTitle">Название</label>
         <input id="taskModalTaskTitle" maxlength="160" required />
       </div>
       <div class="field">
-        <label for="taskModalCategory">Category</label>
+        <label for="taskModalCategory">Категория</label>
         <input id="taskModalCategory" maxlength="80" />
       </div>
       <div class="field">
-        <label for="taskModalPriority">Priority</label>
+        <label for="taskModalPriority">Приоритет</label>
         <select id="taskModalPriority">
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
+          <option value="low">Низкий</option>
+          <option value="medium">Средний</option>
+          <option value="high">Высокий</option>
         </select>
       </div>
       <div class="field">
-        <label for="taskModalDeadline">Deadline</label>
+        <label for="taskModalDeadline">Дедлайн</label>
         <input id="taskModalDeadline" type="datetime-local" />
       </div>
       <label class="switch-row">
-        <span>Completed</span>
+        <span>Завершена</span>
         <input id="taskModalCompleted" type="checkbox" />
       </label>
       <div class="field field--wide">
-        <label for="taskModalNotes">Notes</label>
+        <label for="taskModalNotes">Заметки</label>
         <textarea id="taskModalNotes" maxlength="1000" rows="5"></textarea>
       </div>
     </div>
     <div class="modal__actions">
-      <button class="secondary-button" type="button" data-close-modal>Cancel</button>
-      <button class="primary-button" type="submit">Save</button>
+      <button class="secondary-button" type="button" data-close-modal>Отмена</button>
+      <button class="primary-button" type="submit">Сохранить</button>
     </div>
   </form>
 </div>
@@ -378,35 +379,35 @@
   <div class="modal__backdrop" data-close-modal></div>
   <form class="modal__dialog" id="bulkModalForm">
     <div class="modal__header">
-      <h2>Bulk edit</h2>
-      <button class="icon-button" type="button" data-close-modal>Close</button>
+      <h2>Массовое изменение</h2>
+      <button class="icon-button" type="button" data-close-modal>Закрыть</button>
     </div>
     <div class="modal__body form-grid">
       <div class="field">
-        <label for="bulkCategory">Category</label>
-        <input id="bulkCategory" maxlength="80" placeholder="Leave empty to keep" />
+        <label for="bulkCategory">Категория</label>
+        <input id="bulkCategory" maxlength="80" placeholder="Оставьте пустым, чтобы не менять" />
       </div>
       <div class="field">
-        <label for="bulkPriority">Priority</label>
+        <label for="bulkPriority">Приоритет</label>
         <select id="bulkPriority">
-          <option value="">Keep current</option>
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
+          <option value="">Не менять</option>
+          <option value="low">Низкий</option>
+          <option value="medium">Средний</option>
+          <option value="high">Высокий</option>
         </select>
       </div>
       <div class="field">
-        <label for="bulkDeadline">Deadline</label>
+        <label for="bulkDeadline">Дедлайн</label>
         <input id="bulkDeadline" type="datetime-local" />
       </div>
       <label class="switch-row">
-        <span>Mark completed</span>
+        <span>Отметить завершенными</span>
         <input id="bulkCompleted" type="checkbox" />
       </label>
     </div>
     <div class="modal__actions">
-      <button class="secondary-button" type="button" data-close-modal>Cancel</button>
-      <button class="primary-button" type="submit">Apply</button>
+      <button class="secondary-button" type="button" data-close-modal>Отмена</button>
+      <button class="primary-button" type="submit">Применить</button>
     </div>
   </form>
 </div>
@@ -415,15 +416,15 @@
   <div class="modal__backdrop" data-close-modal></div>
   <div class="modal__dialog">
     <div class="modal__header">
-      <h2 id="textModalTitle">Data</h2>
-      <button class="icon-button" type="button" data-close-modal>Close</button>
+      <h2 id="textModalTitle">Данные</h2>
+      <button class="icon-button" type="button" data-close-modal>Закрыть</button>
     </div>
     <div class="modal__body">
       <textarea id="textModalValue" rows="12"></textarea>
     </div>
     <div class="modal__actions">
-      <button class="secondary-button" id="textModalSecondaryBtn" type="button">Cancel</button>
-      <button class="primary-button" id="textModalPrimaryBtn" type="button">Apply</button>
+      <button class="secondary-button" id="textModalSecondaryBtn" type="button">Отмена</button>
+      <button class="primary-button" id="textModalPrimaryBtn" type="button">Применить</button>
     </div>
   </div>
 </div>
@@ -432,13 +433,15 @@
   <div class="modal__backdrop" data-close-modal></div>
   <div class="modal__dialog modal__dialog--small">
     <div class="modal__header">
-      <h2 id="confirmTitle">Confirm action</h2>
-      <button class="icon-button" type="button" data-close-modal>Close</button>
+      <h2 id="confirmTitle">Подтвердите действие</h2>
+      <button class="icon-button" type="button" data-close-modal>Закрыть</button>
     </div>
     <p id="confirmMessage"></p>
     <div class="modal__actions">
-      <button class="secondary-button" id="confirmCancelBtn" type="button">Cancel</button>
-      <button class="primary-button danger-primary" id="confirmOkBtn" type="button">Confirm</button>
+      <button class="secondary-button" id="confirmCancelBtn" type="button">Отмена</button>
+      <button class="primary-button danger-primary" id="confirmOkBtn" type="button">
+        Подтвердить
+      </button>
     </div>
   </div>
 </div>

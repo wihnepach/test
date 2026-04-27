@@ -46,6 +46,7 @@ async function initializeAuth() {
   const authStatusBanner = document.getElementById("authStatusBanner");
   const taskStatusBanner = document.getElementById("taskStatusBanner");
   const tabButtons = document.querySelectorAll(".tab-button");
+  const verifyTabButton = document.querySelector('[data-tab="verify"]');
   const authForms = document.querySelectorAll(".auth-form");
   const authModal = document.getElementById("authModal");
   const authModalBackdrop = document.getElementById("authModalBackdrop");
@@ -83,6 +84,7 @@ async function initializeAuth() {
   logoutBtn.addEventListener("click", handleLogout);
 
   closeAuthModal();
+  hideVerificationStep();
   showBanner(authStatusBanner, "Проверяем сессию...", "info");
 
   try {
@@ -124,6 +126,8 @@ async function initializeAuth() {
       });
 
       switchAuthTab("verify");
+      verifyForm.dataset.mode = "register";
+      showVerificationStep();
       verifyContactType.value = result.contactType;
       verifyContact.value = result.pendingContact;
       showBanner(
@@ -151,6 +155,22 @@ async function initializeAuth() {
         })
       });
 
+      if (result.requiresLoginCode) {
+        switchAuthTab("verify");
+        verifyForm.dataset.mode = "login";
+        showVerificationStep();
+        verifyContactType.value = result.contactType;
+        verifyContact.value = result.pendingContact;
+        verifyCode.value = "";
+        showBanner(
+          authStatusBanner,
+          composeVerificationMessage(result.message, result.verificationPreview),
+          "success"
+        );
+        loginForm.reset();
+        return;
+      }
+
       window.appState.currentUser = result.user;
       window.appState.security = null;
       updateAuthView();
@@ -171,15 +191,19 @@ async function initializeAuth() {
     event.preventDefault();
 
     try {
-      const result = await request(`${AUTH_API}/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contactType: verifyContactType.value,
-          contact: verifyContact.value.trim(),
-          code: verifyCode.value.trim()
-        })
-      });
+      const isLoginVerification = verifyForm.dataset.mode === "login";
+      const result = await request(
+        `${AUTH_API}/${isLoginVerification ? "login/verify" : "verify"}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contactType: verifyContactType.value,
+            contact: verifyContact.value.trim(),
+            code: verifyCode.value.trim()
+          })
+        }
+      );
 
       window.appState.currentUser = result.user;
       window.appState.security = null;
@@ -193,12 +217,23 @@ async function initializeAuth() {
       showBanner(taskStatusBanner, result.message, "success");
       hideBanner(authStatusBanner);
       verifyForm.reset();
+      verifyForm.dataset.mode = "register";
+      hideVerificationStep();
     } catch (error) {
       showBanner(authStatusBanner, `Не удалось подтвердить контакт. ${error.message}`, "error");
     }
   }
 
   async function handleResendVerification() {
+    if (verifyForm.dataset.mode === "login") {
+      showBanner(
+        authStatusBanner,
+        "Чтобы получить новый код входа, повторите вход с email и паролем.",
+        "info"
+      );
+      return;
+    }
+
     try {
       const result = await request(`${AUTH_API}/resend-verification`, {
         method: "POST",
@@ -259,6 +294,11 @@ async function initializeAuth() {
   }
 
   function switchAuthTab(tabName) {
+    if (tabName !== "verify") {
+      verifyForm.dataset.mode = "register";
+      hideVerificationStep();
+    }
+
     tabButtons.forEach((button) => {
       button.classList.toggle("tab-button--active", button.dataset.tab === tabName);
     });
@@ -294,6 +334,14 @@ async function initializeAuth() {
     if (event.key === "Escape" && !authModal.hidden) {
       closeAuthModal();
     }
+  }
+
+  function showVerificationStep() {
+    verifyTabButton.hidden = false;
+  }
+
+  function hideVerificationStep() {
+    verifyTabButton.hidden = true;
   }
 
   window.updateAuthView = updateAuthView;

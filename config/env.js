@@ -15,6 +15,9 @@ const CORS_ALLOWED_ORIGINS = String(process.env.CORS_ALLOWED_ORIGINS || "")
   .split(",")
   .map((item) => item.trim())
   .filter(Boolean);
+const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
+const VERIFICATION_CODE_PREVIEW =
+  String(process.env.VERIFICATION_CODE_PREVIEW || "").toLowerCase() === "true";
 
 module.exports = {
   HOST: process.env.HOST || "127.0.0.1",
@@ -29,6 +32,18 @@ module.exports = {
   LOGIN_MAX_ATTEMPTS: Number(process.env.LOGIN_MAX_ATTEMPTS) || 5,
   LOGIN_BLOCK_MS: Number(process.env.LOGIN_BLOCK_MS) || 15 * 60 * 1000,
   LOGIN_FAILURE_DELAY_MS: Number(process.env.LOGIN_FAILURE_DELAY_MS) || 300,
+  SMTP_HOST: process.env.SMTP_HOST || "",
+  SMTP_PORT,
+  SMTP_SECURE: String(process.env.SMTP_SECURE || "").toLowerCase() === "true",
+  SMTP_USER: process.env.SMTP_USER || "",
+  SMTP_PASS: process.env.SMTP_PASS || "",
+  EMAIL_FROM:
+    process.env.EMAIL_FROM || process.env.SMTP_USER || "TaskFlow <no-reply@taskflow.local>",
+  EMAIL_REQUIRE_DELIVERY:
+    process.env.EMAIL_REQUIRE_DELIVERY !== undefined
+      ? String(process.env.EMAIL_REQUIRE_DELIVERY).toLowerCase() === "true"
+      : !VERIFICATION_CODE_PREVIEW,
+  VERIFICATION_CODE_PREVIEW,
   CORS_ALLOWED_ORIGINS,
   ENCRYPTION_KEY: crypto.createHash("sha256").update(ENCRYPTION_SECRET).digest(),
   ROOT_DIR,

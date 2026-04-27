@@ -30,6 +30,8 @@ function setupDatabase() {
       isVerified INTEGER NOT NULL DEFAULT 0,
       verificationCodeHash TEXT,
       verificationExpiresAt INTEGER,
+      loginCodeHash TEXT,
+      loginCodeExpiresAt INTEGER,
       createdAt INTEGER NOT NULL
     );
 
@@ -58,6 +60,19 @@ function setupDatabase() {
 
     CREATE INDEX IF NOT EXISTS idx_sessions_tokenHash ON sessions (tokenHash);
   `);
+
+  const userColumns = db
+    .prepare("PRAGMA table_info(users)")
+    .all()
+    .map((column) => column.name);
+
+  if (!userColumns.includes("loginCodeHash")) {
+    db.exec("ALTER TABLE users ADD COLUMN loginCodeHash TEXT");
+  }
+
+  if (!userColumns.includes("loginCodeExpiresAt")) {
+    db.exec("ALTER TABLE users ADD COLUMN loginCodeExpiresAt INTEGER");
+  }
 
   const columns = db
     .prepare("PRAGMA table_info(tasks)")

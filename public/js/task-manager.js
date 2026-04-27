@@ -40,7 +40,7 @@ async function initializeTaskManager() {
   renderTasks();
 
   async function loadTasks() {
-    showInfo("Loading workspace...");
+    showInfo("Загружаем рабочее пространство...");
 
     try {
       const [tasks, trash, session] = await Promise.all([
@@ -59,7 +59,7 @@ async function initializeTaskManager() {
       window.hideBanner(elements.taskStatusBanner);
       renderTasks();
     } catch (error) {
-      showError(`Failed to load workspace. ${error.message}`);
+      showError(`Не удалось загрузить рабочее пространство. ${error.message}`);
     }
   }
 
@@ -144,7 +144,7 @@ async function initializeTaskManager() {
       renderTasks();
       return createdTask;
     } catch (error) {
-      showError(`Failed to create task. ${error.message}`);
+      showError(`Не удалось создать задачу. ${error.message}`);
       return null;
     }
   }
@@ -218,9 +218,9 @@ async function initializeTaskManager() {
     notes.hidden = !task.notes;
     priorityBadge.textContent = priorityLabel(task.priority);
     priorityBadge.dataset.priority = task.priority;
-    category.textContent = task.category ? `Category: ${task.category}` : "No category";
-    created.textContent = `Created: ${formatDate(task.createdAt)}`;
-    deadline.textContent = task.deadline ? `Deadline: ${formatDate(task.deadline)}` : "No deadline";
+    category.textContent = task.category ? `Категория: ${task.category}` : "Без категории";
+    created.textContent = `Создана: ${formatDate(task.createdAt)}`;
+    deadline.textContent = task.deadline ? `Дедлайн: ${formatDate(task.deadline)}` : "Без дедлайна";
 
     taskNode
       .querySelector(".details-button")
@@ -313,7 +313,7 @@ async function initializeTaskManager() {
       renderTasks();
       return updatedTask;
     } catch (error) {
-      showError(`Failed to update task. ${error.message}`);
+      showError(`Не удалось обновить задачу. ${error.message}`);
       return null;
     }
   }
@@ -325,7 +325,7 @@ async function initializeTaskManager() {
   function openTaskModal(taskId) {
     const task = taskId ? findTask(taskId) : null;
 
-    elements.taskModalTitle.textContent = task ? "Task details" : "Quick add";
+    elements.taskModalTitle.textContent = task ? "Детали задачи" : "Быстрое добавление";
     elements.taskModalId.value = task ? task.id : "";
     elements.taskModalTaskTitle.value = task ? task.title : "";
     elements.taskModalCategory.value = task ? task.category || "" : "";
@@ -370,7 +370,7 @@ async function initializeTaskManager() {
     }
 
     await createTask({
-      title: `${task.title} copy`,
+      title: `${task.title} копия`,
       category: task.category,
       priority: task.priority,
       deadline: task.deadline,
@@ -391,7 +391,10 @@ async function initializeTaskManager() {
   }
 
   async function deleteTask(taskId) {
-    const confirmed = await confirmAction("Move to trash", "Move this task to trash?");
+    const confirmed = await confirmAction(
+      "Переместить в корзину",
+      "Переместить эту задачу в корзину?"
+    );
 
     if (!confirmed) {
       return;
@@ -408,7 +411,7 @@ async function initializeTaskManager() {
       syncManualOrderWithTasks();
       renderTasks();
     } catch (error) {
-      showError(`Failed to delete task. ${error.message}`);
+      showError(`Не удалось удалить задачу. ${error.message}`);
     }
   }
 
@@ -416,13 +419,13 @@ async function initializeTaskManager() {
     const completedTasks = window.appState.tasks.filter((task) => task.completed).length;
 
     if (completedTasks === 0) {
-      showInfo("No completed tasks to clear.");
+      showInfo("Нет завершенных задач для очистки.");
       return;
     }
 
     const confirmed = await confirmAction(
-      "Clear completed",
-      `Move ${completedTasks} completed tasks to trash?`
+      "Очистить завершенные",
+      `Переместить завершенные задачи в корзину: ${completedTasks}?`
     );
 
     if (!confirmed) {
@@ -433,7 +436,7 @@ async function initializeTaskManager() {
       await window.request("/api/tasks?completed=true", { method: "DELETE" });
       await loadTasks();
     } catch (error) {
-      showError(`Failed to clear completed tasks. ${error.message}`);
+      showError(`Не удалось очистить завершенные задачи. ${error.message}`);
     }
   }
 
@@ -468,7 +471,7 @@ async function initializeTaskManager() {
     const ids = selectedIds();
 
     if (ids.length === 0) {
-      showInfo("Select at least one task.");
+      showInfo("Выберите хотя бы одну задачу.");
       return;
     }
 
@@ -477,7 +480,7 @@ async function initializeTaskManager() {
 
   function openBulkEditModal() {
     if (selectedIds().length === 0) {
-      showInfo("Select at least one task.");
+      showInfo("Выберите хотя бы одну задачу.");
       return;
     }
 
@@ -522,10 +525,10 @@ async function initializeTaskManager() {
       });
 
       result.tasks.forEach(replaceTask);
-      showInfo(`Updated ${result.updatedCount} tasks.`);
+      showInfo(`Обновлено задач: ${result.updatedCount}.`);
       renderTasks();
     } catch (error) {
-      showError(`Failed to update selected tasks. ${error.message}`);
+      showError(`Не удалось обновить выбранные задачи. ${error.message}`);
     }
   }
 
@@ -533,13 +536,13 @@ async function initializeTaskManager() {
     const ids = selectedIds();
 
     if (ids.length === 0) {
-      showInfo("Select at least one task.");
+      showInfo("Выберите хотя бы одну задачу.");
       return;
     }
 
     const confirmed = await confirmAction(
-      "Move selected to trash",
-      `Move ${ids.length} selected tasks to trash?`
+      "Переместить выбранные в корзину",
+      `Переместить выбранные задачи в корзину: ${ids.length}?`
     );
 
     if (!confirmed) {
@@ -553,7 +556,7 @@ async function initializeTaskManager() {
       uiState.selectedTaskIds.clear();
       await loadTasks();
     } catch (error) {
-      showError(`Failed to delete selected tasks. ${error.message}`);
+      showError(`Не удалось удалить выбранные задачи. ${error.message}`);
     }
   }
 
@@ -561,7 +564,7 @@ async function initializeTaskManager() {
     const ids = selectedIds();
 
     if (ids.length === 0) {
-      showInfo("Select at least one task.");
+      showInfo("Выберите хотя бы одну задачу.");
       return;
     }
 
@@ -574,24 +577,24 @@ async function initializeTaskManager() {
       const data = await window.request("/api/tasks/export");
       openExportModal(data);
     } catch (error) {
-      showError(`Failed to export tasks. ${error.message}`);
+      showError(`Не удалось экспортировать задачи. ${error.message}`);
     }
   }
 
   function openExportModal(data) {
-    elements.textModalTitle.textContent = "Export JSON";
+    elements.textModalTitle.textContent = "Экспорт JSON";
     elements.textModalValue.value = JSON.stringify(data, null, 2);
     elements.textModalValue.readOnly = true;
-    elements.textModalPrimaryBtn.textContent = "Close";
+    elements.textModalPrimaryBtn.textContent = "Закрыть";
     elements.textModalPrimaryBtn.onclick = closeModals;
     openModal(elements.textModal);
   }
 
   function openImportModal() {
-    elements.textModalTitle.textContent = "Import JSON";
+    elements.textModalTitle.textContent = "Импорт JSON";
     elements.textModalValue.value = "";
     elements.textModalValue.readOnly = false;
-    elements.textModalPrimaryBtn.textContent = "Import";
+    elements.textModalPrimaryBtn.textContent = "Импортировать";
     elements.textModalPrimaryBtn.onclick = importTasks;
     openModal(elements.textModal);
     elements.textModalValue.focus();
@@ -608,10 +611,10 @@ async function initializeTaskManager() {
       });
 
       closeModals();
-      showInfo(`Imported ${result.importedCount} tasks.`);
+      showInfo(`Импортировано задач: ${result.importedCount}.`);
       await loadTasks();
     } catch (error) {
-      showError(`Failed to import tasks. ${error.message}`);
+      showError(`Не удалось импортировать задачи. ${error.message}`);
     }
   }
 
@@ -630,13 +633,13 @@ async function initializeTaskManager() {
     const recentlyDone = window.appState.tasks.filter((task) => task.completed).slice(0, 4);
 
     const cards = [
-      dashboardCard("Overdue", overdue),
-      dashboardCard("Due today", dueToday),
-      dashboardCard("High priority", highPriority)
+      dashboardCard("Просрочено", overdue),
+      dashboardCard("На сегодня", dueToday),
+      dashboardCard("Высокий приоритет", highPriority)
     ];
 
     if (uiState.preferences.dashboardDone) {
-      cards.push(dashboardCard("Recently completed", recentlyDone));
+      cards.push(dashboardCard("Недавно завершенные", recentlyDone));
     }
 
     elements.dashboardGrid.innerHTML = cards.join("");
@@ -653,7 +656,7 @@ async function initializeTaskManager() {
           <h3>${title}</h3>
           <strong>${tasks.length}</strong>
         </div>
-        <ul>${items || "<li>No tasks</li>"}</ul>
+        <ul>${items || "<li>Нет задач</li>"}</ul>
       </article>
     `;
   }
@@ -672,13 +675,13 @@ async function initializeTaskManager() {
               <time>${formatDate(task.deadline)}</time>
               <div>
                 <h3>${escapeHtml(task.title)}</h3>
-                <p>${escapeHtml(task.category || "No category")} • ${priorityLabel(task.priority)}</p>
+                <p>${escapeHtml(task.category || "Без категории")} • ${priorityLabel(task.priority)}</p>
               </div>
             </article>
           `
         )
         .join("") ||
-      `<div class="empty-state empty-state--visible"><h3>No deadlines</h3><p>Add deadlines to build a timeline.</p></div>`;
+      `<div class="empty-state empty-state--visible"><h3>Дедлайнов нет</h3><p>Добавьте дедлайны, чтобы собрать ленту сроков.</p></div>`;
   }
 
   function renderTrash() {
@@ -697,9 +700,9 @@ async function initializeTaskManager() {
       badge.textContent = priorityLabel(task.priority);
       badge.dataset.priority = task.priority;
       node.querySelector(".task-category").textContent = task.category
-        ? `Category: ${task.category}`
-        : "No category";
-      node.querySelector(".task-deleted").textContent = `Deleted: ${formatDate(task.deletedAt)}`;
+        ? `Категория: ${task.category}`
+        : "Без категории";
+      node.querySelector(".task-deleted").textContent = `Удалена: ${formatDate(task.deletedAt)}`;
       node.querySelector(".restore-button").addEventListener("click", () => restoreTask(task.id));
       node
         .querySelector(".permanent-delete-button")
@@ -716,14 +719,14 @@ async function initializeTaskManager() {
       syncManualOrderWithTasks(true);
       renderTasks();
     } catch (error) {
-      showError(`Failed to restore task. ${error.message}`);
+      showError(`Не удалось восстановить задачу. ${error.message}`);
     }
   }
 
   async function permanentlyDeleteTask(taskId) {
     const confirmed = await confirmAction(
-      "Delete forever",
-      "This task cannot be restored after deletion."
+      "Удалить навсегда",
+      "После этого задачу нельзя будет восстановить."
     );
 
     if (!confirmed) {
@@ -735,17 +738,20 @@ async function initializeTaskManager() {
       window.appState.trash = window.appState.trash.filter((task) => task.id !== taskId);
       renderTrash();
     } catch (error) {
-      showError(`Failed to delete task forever. ${error.message}`);
+      showError(`Не удалось удалить задачу навсегда. ${error.message}`);
     }
   }
 
   async function clearTrash() {
     if (window.appState.trash.length === 0) {
-      showInfo("Trash is already empty.");
+      showInfo("Корзина уже пуста.");
       return;
     }
 
-    const confirmed = await confirmAction("Clear trash", "Delete every task in trash forever?");
+    const confirmed = await confirmAction(
+      "Очистить корзину",
+      "Удалить все задачи в корзине навсегда?"
+    );
 
     if (!confirmed) {
       return;
@@ -756,7 +762,7 @@ async function initializeTaskManager() {
       window.appState.trash = [];
       renderTrash();
     } catch (error) {
-      showError(`Failed to clear trash. ${error.message}`);
+      showError(`Не удалось очистить корзину. ${error.message}`);
     }
   }
 
@@ -767,26 +773,28 @@ async function initializeTaskManager() {
       label: priorityLabel(priority),
       count: window.appState.tasks.filter((task) => task.priority === priority).length
     }));
-    const categories = countBy(window.appState.tasks.map((task) => task.category || "No category"));
+    const categories = countBy(
+      window.appState.tasks.map((task) => task.category || "Без категории")
+    );
     const completionRate = total === 0 ? 0 : Math.round((done / total) * 100);
 
     elements.analyticsGrid.innerHTML = `
       <article class="analytics-card">
-        <h3>Completion</h3>
+        <h3>Выполнение</h3>
         <strong>${completionRate}%</strong>
         <div class="progress"><span style="width: ${completionRate}%"></span></div>
       </article>
       <article class="analytics-card">
-        <h3>Priority mix</h3>
+        <h3>По приоритетам</h3>
         ${byPriority.map((item) => statRow(item.label, item.count, total)).join("")}
       </article>
       <article class="analytics-card">
-        <h3>Categories</h3>
+        <h3>Категории</h3>
         ${
           Object.entries(categories)
             .slice(0, 6)
             .map(([label, count]) => statRow(label, count, total))
-            .join("") || "<p>No categories yet</p>"
+            .join("") || "<p>Категорий пока нет</p>"
         }
       </article>
     `;
@@ -807,13 +815,13 @@ async function initializeTaskManager() {
     elements.activeSessionsValue.textContent = String(uiState.security?.activeSessions || 1);
     elements.sessionExpiresValue.textContent = uiState.security?.currentSessionExpiresAt
       ? formatDate(uiState.security.currentSessionExpiresAt)
-      : "Unknown";
+      : "Неизвестно";
   }
 
   async function logoutAllSessions() {
     const confirmed = await confirmAction(
-      "Sign out everywhere",
-      "End all sessions for this account?"
+      "Выйти на всех устройствах",
+      "Завершить все сессии этого аккаунта?"
     );
 
     if (!confirmed) {
@@ -829,9 +837,9 @@ async function initializeTaskManager() {
         window.updateAuthView();
       }
       renderTasks();
-      showInfo("All sessions ended.");
+      showInfo("Все сессии завершены.");
     } catch (error) {
-      showError(`Failed to sign out everywhere. ${error.message}`);
+      showError(`Не удалось выйти на всех устройствах. ${error.message}`);
     }
   }
 
@@ -899,7 +907,7 @@ async function initializeTaskManager() {
 
     if (hasMore) {
       const remaining = totalPreparedCount - visibleCount;
-      elements.loadMoreInfo.textContent = `Showing ${visibleCount} of ${totalPreparedCount}. Remaining: ${remaining}.`;
+      elements.loadMoreInfo.textContent = `Показано ${visibleCount} из ${totalPreparedCount}. Осталось: ${remaining}.`;
     }
   }
 
@@ -908,9 +916,7 @@ async function initializeTaskManager() {
     const allVisibleSelected =
       visibleTasks.length > 0 && visibleTasks.every((task) => uiState.selectedTaskIds.has(task.id));
 
-    elements.selectVisibleBtn.textContent = allVisibleSelected
-      ? "Unselect visible"
-      : "Select visible";
+    elements.selectVisibleBtn.textContent = allVisibleSelected ? "Снять выбор" : "Выбрать видимые";
     elements.markSelectedCompletedBtn.disabled = selectedCount === 0;
     elements.deleteSelectedBtn.disabled = selectedCount === 0;
     elements.bulkEditBtn.disabled = selectedCount === 0;
@@ -935,15 +941,15 @@ async function initializeTaskManager() {
   function updateSummary(visibleCount) {
     if (window.appState.tasks.length === 0) {
       elements.taskSummary.textContent = window.appState.currentUser
-        ? "No tasks yet"
-        : "Sign in to manage tasks";
+        ? "Задач пока нет"
+        : "Войдите, чтобы управлять задачами";
       return;
     }
 
     const selectedCount = uiState.selectedTaskIds.size;
     elements.taskSummary.textContent =
-      `Visible: ${visibleCount} of ${window.appState.tasks.length}` +
-      (selectedCount > 0 ? ` • Selected: ${selectedCount}` : "");
+      `Показано: ${visibleCount} из ${window.appState.tasks.length}` +
+      (selectedCount > 0 ? ` • Выбрано: ${selectedCount}` : "");
   }
 
   function pruneSelectedIds() {
@@ -1144,7 +1150,7 @@ function formatDate(value) {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return "Invalid date";
+    return "Некорректная дата";
   }
 
   return new Intl.DateTimeFormat("ru-RU", {
@@ -1186,9 +1192,9 @@ function priorityWeight(priority) {
 
 function priorityLabel(priority) {
   const labels = {
-    low: "Low priority",
-    medium: "Medium priority",
-    high: "High priority"
+    low: "Низкий приоритет",
+    medium: "Средний приоритет",
+    high: "Высокий приоритет"
   };
 
   return labels[priority] ?? labels.medium;

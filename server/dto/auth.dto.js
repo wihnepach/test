@@ -15,9 +15,10 @@ function toUserDto(user, decryptValue, maskContact) {
 
 function toRegisterResponse(contactType, pendingContact, verificationPreview) {
   return {
-    message: `Verification code sent to ${
-      contactType === AUTH_CONTACT_TYPE.EMAIL ? "email" : "phone"
-    }.`,
+    message:
+      contactType === AUTH_CONTACT_TYPE.EMAIL
+        ? "Код подтверждения отправлен на email."
+        : "Код подтверждения создан.",
     pendingContact,
     contactType,
     verificationPreview
@@ -26,14 +27,14 @@ function toRegisterResponse(contactType, pendingContact, verificationPreview) {
 
 function toVerificationSuccessResponse(userDto) {
   return {
-    message: "Contact verified successfully. You are now logged in.",
+    message: "Контакт подтвержден. Вы вошли в аккаунт.",
     user: userDto
   };
 }
 
 function toLoginSuccessResponse(userDto) {
   return {
-    message: "Login successful.",
+    message: "Вход выполнен.",
     user: userDto
   };
 }

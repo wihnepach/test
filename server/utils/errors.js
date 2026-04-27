@@ -36,6 +36,13 @@ function toHttpErrorPayload(error) {
     };
   }
 
+  if (error?.type === "entity.parse.failed") {
+    return {
+      status: error.statusCode || 400,
+      body: buildErrorBody("INVALID_JSON", "Request body contains invalid JSON.")
+    };
+  }
+
   return {
     status: 500,
     body: buildErrorBody("INTERNAL_ERROR", "Internal server error.")
