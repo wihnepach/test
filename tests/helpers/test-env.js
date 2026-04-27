@@ -26,7 +26,8 @@ const MODULES_TO_CLEAR = [
   "server/services/tasks.service.js",
   "server/utils/async-handler.js",
   "server/utils/crypto.js",
-  "server/utils/errors.js"
+  "server/utils/errors.js",
+  "server/utils/validators.js"
 ];
 
 function initTestEnvironment(suiteName) {

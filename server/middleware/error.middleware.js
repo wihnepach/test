@@ -8,7 +8,7 @@ function notFoundHandler(request, response) {
 }
 
 function errorHandler(error, request, response, _next) {
-  if (process.env.NODE_ENV !== "test") {
+  if (process.env.NODE_ENV !== "test" && error?.type !== "entity.parse.failed") {
     console.error(error);
   }
 
