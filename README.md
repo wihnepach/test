@@ -586,5 +586,3 @@ This project demonstrates practical capability in:
 - frontend UX implementation without framework shortcuts
 - testing strategy and quality automation
 - production-oriented delivery discipline
-
-If presented in interview/assessment, this is not a toy app: it is a complete mini-product with engineering process maturity.
