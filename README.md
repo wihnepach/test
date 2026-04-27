@@ -588,14 +588,3 @@ This project demonstrates practical capability in:
 - production-oriented delivery discipline
 
 If presented in interview/assessment, this is not a toy app: it is a complete mini-product with engineering process maturity.
-
----
-
-## 15. Next Upgrade Ideas
-
-- Add OpenAPI/Swagger spec generation
-- Add pagination support directly in backend query layer
-- Add optimistic UI + rollback for bulk actions
-- Add docker-compose for one-command environment setup
-- Add observability (request IDs, audit logs, metrics)
-- Add refresh-token strategy and session revocation dashboard
